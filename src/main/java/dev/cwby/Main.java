@@ -1,7 +1,9 @@
 package dev.cwby;
 
 public class Main {
+
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        Deditor deditor = new Deditor();
+        deditor.start();
     }
 }
