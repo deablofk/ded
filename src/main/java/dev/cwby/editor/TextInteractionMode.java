@@ -1,4 +1,4 @@
-package dev.cwby;
+package dev.cwby.editor;
 
 public enum TextInteractionMode {
     INSERT("INSERT-MODE"),

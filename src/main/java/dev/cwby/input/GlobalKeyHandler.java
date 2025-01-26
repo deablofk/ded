@@ -1,16 +1,18 @@
 package dev.cwby.input;
 
-import dev.cwby.TextInteractionMode;
+import dev.cwby.Deditor;
+import dev.cwby.editor.TextInteractionMode;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GlobalKeyHandler implements IKeyHandler {
     public static TextInteractionMode MODE = TextInteractionMode.NAVIGATION;
 
-
     @Override
     public void handleKey(int key, int action, int mods) {
-        handleMode(key, action, mods);
+        if (action == GLFW_RELEASE) {
+            handleMode(key, action, mods);
+        }
     }
 
     @Override
@@ -19,6 +21,8 @@ public class GlobalKeyHandler implements IKeyHandler {
             if (codePoint == ':') {
                 MODE = TextInteractionMode.COMMAND;
             }
+        } else if (MODE == TextInteractionMode.INSERT) {
+            Deditor.buffer.appendChar((char) codePoint);
         }
     }
 
@@ -36,7 +40,8 @@ public class GlobalKeyHandler implements IKeyHandler {
             case GLFW_KEY_ESCAPE:
                 MODE = TextInteractionMode.NAVIGATION;
                 break;
-            default:
+            case GLFW_KEY_ENTER:
+                Deditor.buffer.newLine();
                 break;
         }
     }

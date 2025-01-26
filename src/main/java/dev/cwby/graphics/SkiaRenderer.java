@@ -1,8 +1,9 @@
 package dev.cwby.graphics;
 
-import dev.cwby.TextBuffer;
+import dev.cwby.Deditor;
 import dev.cwby.input.GlobalKeyHandler;
 import io.github.humbleui.skija.*;
+import io.github.humbleui.types.Rect;
 import org.lwjgl.opengl.GL11;
 
 public class SkiaRenderer implements IRender {
@@ -10,23 +11,49 @@ public class SkiaRenderer implements IRender {
     private final DirectContext context;
     private Surface surface;
     private Canvas canvas;
-    private final TextBuffer textBuffer;
 
-    private final Paint paint;
-    private final Font font;
     private final Paint textPaint;
-
     private final float lineHeight;
+
+    private final Typeface[] fallbackTypefaces = new Typeface[]{Typeface.makeFromName("Iosevka Nerd Font", FontStyle.NORMAL), Typeface.makeFromName("Noto Color Emoji", FontStyle.NORMAL), Typeface.makeDefault()};
+    private final Font font = new Font(fallbackTypefaces[0], 24);
+
+    private static boolean cursorVisible = true;
+    private static long lastBlinkTime = 0;
+    private static final int BLINK_INTERVAL = 500; // 500ms
+    private static float cursorWidth;
+    private static final Paint cursorColor = new Paint().setColor(0xFF888888);
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
         onResize(1280, 720);
-        textBuffer = new TextBuffer();
-
-        font = new Font(Typeface.makeFromName("Iosevka Nerd Font", FontStyle.NORMAL), 24);
-        paint = new Paint().setColor(0xFF00FF00);
         textPaint = new Paint().setColor(0xFFFFFFFF);
         lineHeight = font.getMetrics().getHeight();
+        cursorWidth = font.getMetrics().getAvgCharWidth();
+    }
+
+    private Font resolveFontForGlyph(int codePoint) {
+        for (Typeface typeface : fallbackTypefaces) {
+            Font font = new Font(typeface, 24);
+            if (font.getUTF32Glyph(codePoint) != 0) {
+                return font;
+            }
+        }
+        return font;
+    }
+
+    public void drawStringWithFontFallback(String text, float x, float y, Paint paint) {
+        float offsetX = x;
+        for (int i = 0; i < text.length(); ) {
+            int codePoint = text.codePointAt(i);
+            Font font = resolveFontForGlyph(codePoint);
+
+            String glyph = new String(Character.toChars(codePoint));
+            canvas.drawString(glyph, offsetX, y, font, paint);
+
+            offsetX += font.measureTextWidth(glyph);
+            i += Character.charCount(codePoint); // Handle surrogate pairs
+        }
     }
 
     @Override
@@ -37,17 +64,70 @@ public class SkiaRenderer implements IRender {
         canvas = surface.getCanvas();
     }
 
-    public void render(int width, int height) {
-        canvas.clear(0xFF000000);
-        canvas.drawString("� DEBUG: width(" + width + ") height(" + height + ")", 0, 24, font, textPaint);
-        for (int i = 0; i < textBuffer.getLines().size(); i++) {
-            canvas.drawString(textBuffer.getLines().get(i).toString(), 0, 24 + 24 + i * lineHeight, font, textPaint);
+    public void renderCursor() {
+        long now = System.currentTimeMillis();
+
+        if (now - lastBlinkTime >= BLINK_INTERVAL) {
+            cursorVisible = !cursorVisible;
+            lastBlinkTime = now;
         }
 
-        canvas.drawString("STATUS LINE | " + GlobalKeyHandler.MODE, 0, height - lineHeight, font, textPaint);
+        if (cursorVisible) {
+            float x = 0;
+            int cursorX = Deditor.buffer.cursorX;
+            int cursorY = Deditor.buffer.cursorY;
 
+            if (cursorY >= 0 && cursorY < Deditor.buffer.lines.size()) {
+                StringBuilder line = Deditor.buffer.lines.get(cursorY);
+
+                for (int i = 0; i < cursorX && i < line.length(); ) {
+                    int codePoint = line.codePointAt(i);
+                    Font font = resolveFontForGlyph(codePoint);
+                    String glyph = new String(Character.toChars(codePoint));
+                    x += font.measureTextWidth(glyph);
+                    i += Character.charCount(codePoint);
+                }
+            }
+
+            if (x < 0) {
+                x = 0;
+            }
+
+            float y = cursorY * lineHeight;
+
+            canvas.drawRect(Rect.makeXYWH(x, y, cursorWidth, lineHeight), cursorColor);
+        }
+    }
+
+    public void renderText() {
+        for (int i = 0; i < Deditor.buffer.lines.size(); i++) {
+            StringBuilder line = Deditor.buffer.lines.get(i);
+            drawStringWithFontFallback(line.toString(), 0, 24 + i * lineHeight, textPaint);
+        }
+    }
+
+    public void renderBackground() {
+        canvas.clear(0xFF000000);
+    }
+
+    public void renderStatusLine(float posY, float drawDuration) {
+        drawStringWithFontFallback("\uD83D\uDC4D STATUS LINE | " + GlobalKeyHandler.MODE + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
+    }
+
+    @Override
+    public void render(int width, int height) {
+        long startTime = System.nanoTime(); // Start timing
+
+        renderBackground();
+        renderText();
+        renderCursor();
+
+        long endTime = System.nanoTime(); // Start timing
+        float duration = (float) ((endTime - startTime) / 1_000_000.0);
+        renderStatusLine(height - lineHeight, duration);
         context.flush();
         surface.flushAndSubmit();
+
     }
 
 }

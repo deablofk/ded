@@ -40,7 +40,6 @@ public class Engine {
         GL.createCapabilities();
     }
 
-
     public void destroyGLFW() {
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
@@ -51,7 +50,6 @@ public class Engine {
             errorCallback.close();
         }
     }
-
 
     public void loop() {
         if (renderer == null) {
@@ -66,7 +64,6 @@ public class Engine {
             glfwPollEvents();
         }
     }
-
 
     public void setKeyHandler(IKeyHandler keyHandler) {
         this.keyHandler = keyHandler;
