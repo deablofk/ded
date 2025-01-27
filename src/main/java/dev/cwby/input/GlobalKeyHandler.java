@@ -24,7 +24,7 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handleChar(long codePoint) {
         switch (Deditor.getMode()) {
             case COMMAND -> Deditor.commandBuffer.append((char) codePoint);
-            case INSERT -> Deditor.buffer.appendChar((char) codePoint);
+            case INSERT -> Deditor.buffer.insertCharAtCursor((char) codePoint);
         }
     }
 

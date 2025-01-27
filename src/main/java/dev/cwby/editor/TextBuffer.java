@@ -31,6 +31,11 @@ public class TextBuffer {
         this.cursorX++;
     }
 
+    public void insertCharAtCursor(char c) {
+        StringBuilder builder = getCurrentLine();
+        builder.insert(this.cursorX++, c);
+    }
+
     public void removeChar() {
         if (cursorX > 0) {
             getCurrentLine().deleteCharAt(cursorX - 1);
