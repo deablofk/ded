@@ -1,7 +1,7 @@
 package dev.cwby.graphics;
 
 import dev.cwby.Deditor;
-import dev.cwby.input.GlobalKeyHandler;
+import dev.cwby.editor.TextInteractionMode;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
 import org.lwjgl.opengl.GL11;
@@ -52,7 +52,7 @@ public class SkiaRenderer implements IRender {
             canvas.drawString(glyph, offsetX, y, font, paint);
 
             offsetX += font.measureTextWidth(glyph);
-            i += Character.charCount(codePoint); // Handle surrogate pairs
+            i += Character.charCount(codePoint);
         }
     }
 
@@ -111,23 +111,25 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderStatusLine(float posY, float drawDuration) {
-        drawStringWithFontFallback("\uD83D\uDC4D STATUS LINE | " + GlobalKeyHandler.MODE + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
+        if (Deditor.getMode() == TextInteractionMode.COMMAND) {
+            drawStringWithFontFallback(":" + Deditor.commandBuffer.toString(), 0, posY, textPaint);
+        } else {
+            drawStringWithFontFallback(Deditor.getMode() + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
+        }
     }
 
     @Override
     public void render(int width, int height) {
-        long startTime = System.nanoTime(); // Start timing
-
+        long startTime = System.nanoTime();
         renderBackground();
         renderText();
         renderCursor();
 
-        long endTime = System.nanoTime(); // Start timing
+        long endTime = System.nanoTime();
         float duration = (float) ((endTime - startTime) / 1_000_000.0);
         renderStatusLine(height - lineHeight, duration);
         context.flush();
         surface.flushAndSubmit();
-
     }
 
 }

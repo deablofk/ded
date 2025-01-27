@@ -12,7 +12,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Engine {
 
-    private long window;
+    public long window;
     private int width = 1280;
     private int height = 720;
     private GLFWFramebufferSizeCallback resizeCallback;
