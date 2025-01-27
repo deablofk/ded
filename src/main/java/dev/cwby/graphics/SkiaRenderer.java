@@ -134,7 +134,7 @@ public class SkiaRenderer implements IRender {
         int cursorX = Deditor.buffer.cursorX;
         int cursorY = Deditor.buffer.cursorY;
 
-        if (cursorVisible && (cursorY < Deditor.buffer.lines.size()) && Deditor.getMode() == TextInteractionMode.NAVIGATION) {
+        if (cursorVisible && (cursorY < Deditor.buffer.lines.size())) {
             float x = 0;
             if (cursorY >= 0) {
                 StringBuilder line = Deditor.buffer.lines.get(cursorY);
@@ -148,8 +148,11 @@ public class SkiaRenderer implements IRender {
             }
 
             float y = cursorY * lineHeight;
-
-            canvas.drawRect(Rect.makeXYWH(x, y, cursorWidth, lineHeight), cursorColor);
+            if (Deditor.getMode() == TextInteractionMode.NAVIGATION) {
+                canvas.drawRect(Rect.makeXYWH(x, y, cursorWidth, lineHeight), cursorColor);
+            } else if (Deditor.getMode() == TextInteractionMode.INSERT) {
+                canvas.drawRect(Rect.makeXYWH(x, y, 2, lineHeight), cursorColor);
+            }
         }
     }
 
