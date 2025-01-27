@@ -34,6 +34,11 @@ public class GlobalKeyHandler implements IKeyHandler {
                 case GLFW_KEY_ESCAPE -> Deditor.setMode(NAVIGATION);
                 case GLFW_KEY_ENTER -> Deditor.buffer.newLine();
                 case GLFW_KEY_BACKSPACE -> Deditor.buffer.removeChar();
+                case GLFW_KEY_TAB -> {
+                    for (int i = 0; i < 4; i ++){
+                        Deditor.buffer.appendChar(' ');
+                    }
+                }
             }
         }
     }

@@ -1,11 +1,11 @@
 package dev.cwby.graphics;
 
-import ch.usi.si.seart.treesitter.Language;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
+import io.github.treesitter.jtreesitter.Node;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
@@ -100,6 +100,21 @@ public class SkiaRenderer implements IRender {
         }
     }
 
+    private void drawHighlightedText(String text, float x, float y, Map<Integer, Paint> styles) {
+        float offsetX = x;
+        for (int i = 0; i < text.length(); ) {
+            int codePoint = text.codePointAt(i);
+            Paint paint = styles.getOrDefault(i, textPaint);
+            Font font = resolveFontForGlyph(codePoint);
+
+            String glyph = new String(Character.toChars(codePoint));
+            canvas.drawString(glyph, offsetX, y, font, paint);
+
+            offsetX += font.measureTextWidth(glyph);
+            i += Character.charCount(codePoint);
+        }
+    }
+
     @Override
     public void onResize(int width, int height) {
         int fbId = GL11.glGetInteger(0x8CA6);
@@ -139,10 +154,11 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderText() {
-//        SyntaxHighlighter.parse(Language.JAVA, Deditor.buffer.getSource());
         for (int i = 0; i < Deditor.buffer.lines.size(); i++) {
             StringBuilder line = Deditor.buffer.lines.get(i);
-            drawStringWithFontFallback(line.toString(), 0, 24 + i * lineHeight, textPaint);
+            Node root = SyntaxHighlighter.parse(line.toString());
+            Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
+            drawHighlightedText(line.toString(), 0, 24 + i * lineHeight, styles);
         }
     }
 

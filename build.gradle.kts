@@ -104,8 +104,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/io.github.humbleui/skija-linux-x64
     implementation("io.github.humbleui:skija-linux-x64:0.116.3")
-    // https://central.sonatype.com/artifact/ch.usi.si.seart/java-tree-sitter
-    implementation("ch.usi.si.seart:java-tree-sitter:1.12.0")
+    // https://central.sonatype.com/artifact/io.github.tree-sitter/jtreesitter
+    implementation("io.github.tree-sitter:jtreesitter:0.24.1")
 }
 
 application{
