@@ -20,7 +20,7 @@ public class Edit implements ICommand {
                 try {
                     List<String> lines = Files.readAllLines(file.toPath());
                     System.out.println(lines);
-                    Deditor.buffer = new TextBuffer(lines);
+                    Deditor.buffer = new TextBuffer(lines, file);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

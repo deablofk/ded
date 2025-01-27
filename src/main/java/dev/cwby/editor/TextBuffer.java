@@ -1,7 +1,6 @@
 package dev.cwby.editor;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +8,14 @@ public class TextBuffer {
     public final List<StringBuilder> lines = new ArrayList<>();
     public int cursorX = 0;
     public int cursorY = 0;
+    public File file;
 
     public TextBuffer() {
         this.lines.add(new StringBuilder());
     }
 
-    public TextBuffer(List<String> lines) {
+    public TextBuffer(List<String> lines, File file) {
+        this.file = file;
         lines.stream().map(StringBuilder::new).forEach(this.lines::add);
     }
 
@@ -91,5 +92,9 @@ public class TextBuffer {
             allLines.append(line).append("\n");
         }
         return allLines.toString();
+    }
+
+    public List<String> getLines() {
+        return lines.stream().map(String::new).toList();
     }
 }

@@ -3,6 +3,7 @@ package dev.cwby;
 import dev.cwby.commands.Edit;
 import dev.cwby.commands.ICommand;
 import dev.cwby.commands.Quit;
+import dev.cwby.commands.Save;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
@@ -25,9 +26,12 @@ public class Deditor {
     public Deditor() {
         var quit = new Quit();
         var edit = new Edit();
+        var save = new Save();
         COMMANDS.put("quit", quit);
         COMMANDS.put("edit", edit);
+        COMMANDS.put("save", save);
         COMMANDS.put("q", quit);
+        COMMANDS.put("w", save);
         COMMANDS.put("e", edit);
     }
 
@@ -66,7 +70,7 @@ public class Deditor {
             try {
                 return executor.run(args);
             } catch (Exception e) {
-                System.out.println("Error executing command: " + fullCommand);
+                System.out.println("Error executing command: " + fullCommand + " -> " + e.getMessage());
                 return false;
             }
         }
