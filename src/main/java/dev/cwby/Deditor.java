@@ -1,5 +1,6 @@
 package dev.cwby;
 
+import dev.cwby.commands.Edit;
 import dev.cwby.commands.ICommand;
 import dev.cwby.commands.Quit;
 import dev.cwby.editor.TextBuffer;
@@ -22,7 +23,12 @@ public class Deditor {
     private static Map<String, ICommand> COMMANDS = new HashMap<>();
 
     public Deditor() {
-        COMMANDS.put("quit", new Quit());
+        var quit = new Quit();
+        var edit = new Edit();
+        COMMANDS.put("quit", quit);
+        COMMANDS.put("edit", edit);
+        COMMANDS.put("q", quit);
+        COMMANDS.put("e", edit);
     }
 
     public void start() {
@@ -70,5 +76,10 @@ public class Deditor {
     // reset the command buffer
     public static void clearCommandBuffer() {
         commandBuffer.setLength(0);
+    }
+
+    public static void main(String[] args) {
+        Deditor deditor = new Deditor();
+        deditor.start();
     }
 }

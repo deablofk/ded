@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    application
 }
 
 group = "dev.cwby"
@@ -103,4 +104,10 @@ dependencies {
 
     // https://mvnrepository.com/artifact/io.github.humbleui/skija-linux-x64
     implementation("io.github.humbleui:skija-linux-x64:0.116.3")
+    // https://central.sonatype.com/artifact/ch.usi.si.seart/java-tree-sitter
+    implementation("ch.usi.si.seart:java-tree-sitter:1.12.0")
+}
+
+application{
+    mainClass = "dev.cwby.Deditor"
 }

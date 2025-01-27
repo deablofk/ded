@@ -1,21 +1,22 @@
 package dev.cwby.input;
 
 import dev.cwby.Deditor;
+import dev.cwby.editor.TextBuffer;
 
 import static dev.cwby.editor.TextInteractionMode.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GlobalKeyHandler implements IKeyHandler {
 
+    private int lastKey = -1;
+
     @Override
     public void handleKey(int key, int action, int mods) {
-        if (action == GLFW_RELEASE) {
-            switch (Deditor.getMode()) {
-                case NAVIGATION -> handleNavigation(key, action, mods);
-                case SELECT -> handleSelect(key, action, mods);
-                case INSERT -> handleInsert(key, action, mods);
-                case COMMAND -> handleCommand(key, action, mods);
-            }
+        switch (Deditor.getMode()) {
+            case NAVIGATION -> handleNavigation(key, action, mods);
+            case SELECT -> handleSelect(key, action, mods);
+            case INSERT -> handleInsert(key, action, mods);
+            case COMMAND -> handleCommand(key, action, mods);
         }
     }
 
@@ -28,9 +29,12 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     public void handleInsert(int key, int action, int mods) {
-        switch (key) {
-            case GLFW_KEY_ESCAPE -> Deditor.setMode(NAVIGATION);
-            case GLFW_KEY_ENTER -> Deditor.buffer.newLine();
+        if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
+            switch (key) {
+                case GLFW_KEY_ESCAPE -> Deditor.setMode(NAVIGATION);
+                case GLFW_KEY_ENTER -> Deditor.buffer.newLine();
+                case GLFW_KEY_BACKSPACE -> Deditor.buffer.removeChar();
+            }
         }
     }
 
@@ -46,7 +50,6 @@ public class GlobalKeyHandler implements IKeyHandler {
         }
     }
 
-
     public void handleCommand(int key, int action, int mods) {
         switch (key) {
             case GLFW_KEY_ESCAPE -> {
@@ -58,17 +61,54 @@ public class GlobalKeyHandler implements IKeyHandler {
                 Deditor.clearCommandBuffer();
                 Deditor.setMode(NAVIGATION);
             }
+            case GLFW_KEY_BACKSPACE -> {
+                if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
+                    int length = Deditor.commandBuffer.length() - 1;
+                    if (length >= 0) {
+                        Deditor.commandBuffer.deleteCharAt(length);
+                    }
+                }
+            }
         }
     }
 
     public void handleNavigation(int key, int action, int mods) {
-        switch (key) {
-            case GLFW_KEY_I -> Deditor.setMode(INSERT);
-            case GLFW_KEY_V -> Deditor.setMode(SELECT);
-            case 47 -> {
-                if (mods == GLFW_MOD_SHIFT) Deditor.setMode(COMMAND);
+        TextBuffer buffer = Deditor.buffer;
+        if (action == GLFW_RELEASE) {
+            switch (key) {
+                case GLFW_KEY_I -> Deditor.setMode(INSERT);
+                case GLFW_KEY_V -> Deditor.setMode(SELECT);
+                case GLFW_KEY_O -> {
+                    if (mods == GLFW_MOD_SHIFT) {
+                        Deditor.buffer.newLineUp();
+                        Deditor.setMode(INSERT);
+                    } else {
+                        Deditor.buffer.newLineDown();
+                        Deditor.setMode(INSERT);
+                    }
+                }
+                case GLFW_KEY_D -> {
+                    if (lastKey == GLFW_KEY_D) {
+                        Deditor.buffer.deleteCurrentLine();
+                        lastKey = -1;
+                    } else {
+                        lastKey = key;
+                    }
+                }
+                case 47 -> {
+                    if (mods == GLFW_MOD_SHIFT) Deditor.setMode(COMMAND);
+                }
+                default -> {
+                }
             }
-            default -> {
+        } else {
+            switch (key) {
+                case GLFW_KEY_H -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY);
+                case GLFW_KEY_J -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY);
+                case GLFW_KEY_K -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY);
+                case GLFW_KEY_L -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY);
+                default -> {
+                }
             }
         }
     }

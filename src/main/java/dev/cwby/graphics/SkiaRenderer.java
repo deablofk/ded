@@ -1,10 +1,21 @@
 package dev.cwby.graphics;
 
+import ch.usi.si.seart.treesitter.Language;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextInteractionMode;
+import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
 import org.lwjgl.opengl.GL11;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SkiaRenderer implements IRender {
     private BackendRenderTarget renderTarget;
@@ -15,8 +26,9 @@ public class SkiaRenderer implements IRender {
     private final Paint textPaint;
     private final float lineHeight;
 
-    private final Typeface[] fallbackTypefaces = new Typeface[]{Typeface.makeFromName("Iosevka Nerd Font", FontStyle.NORMAL), Typeface.makeFromName("Noto Color Emoji", FontStyle.NORMAL), Typeface.makeDefault()};
-    private final Font font = new Font(fallbackTypefaces[0], 24);
+    private final List<Typeface> fallbackTypefaces = new ArrayList<>();
+
+    private final Font font;
 
     private static boolean cursorVisible = true;
     private static long lastBlinkTime = 0;
@@ -28,14 +40,46 @@ public class SkiaRenderer implements IRender {
         context = DirectContext.makeGL();
         onResize(1280, 720);
         textPaint = new Paint().setColor(0xFFFFFFFF);
+        this.fallbackTypefaces.add(Typeface.makeFromName("Iosevka Nerd Font", FontStyle.NORMAL));
+        this.fallbackTypefaces.addAll(getAllSystemFonts());
+        this.font = new Font(fallbackTypefaces.getFirst(), 24);
         lineHeight = font.getMetrics().getHeight();
         cursorWidth = font.getMetrics().getAvgCharWidth();
     }
 
+    public List<Typeface> getAllSystemFonts() {
+        var fontDir = Paths.get("/usr/share/fonts");
+        List<Typeface> fonts = new ArrayList<>();
+
+        try {
+            Files.walkFileTree(fontDir, new SimpleFileVisitor<java.nio.file.Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String fileName = file.toString().toLowerCase();
+                    if (fileName.endsWith(".ttf")) {
+                        Typeface font = Typeface.makeFromFile(file.toString());
+                        fonts.add(font);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return fonts;
+    }
+
+    private final Map<Integer, Font> codePointFontCache = new HashMap<>();
+
     private Font resolveFontForGlyph(int codePoint) {
+        if (codePointFontCache.containsKey(codePoint)) {
+            return codePointFontCache.get(codePoint);
+        }
+
         for (Typeface typeface : fallbackTypefaces) {
             Font font = new Font(typeface, 24);
             if (font.getUTF32Glyph(codePoint) != 0) {
+                codePointFontCache.put(codePoint, font);
                 return font;
             }
         }
@@ -72,14 +116,13 @@ public class SkiaRenderer implements IRender {
             lastBlinkTime = now;
         }
 
-        if (cursorVisible) {
+        int cursorX = Deditor.buffer.cursorX;
+        int cursorY = Deditor.buffer.cursorY;
+
+        if (cursorVisible && (cursorY < Deditor.buffer.lines.size()) && Deditor.getMode() == TextInteractionMode.NAVIGATION) {
             float x = 0;
-            int cursorX = Deditor.buffer.cursorX;
-            int cursorY = Deditor.buffer.cursorY;
-
-            if (cursorY >= 0 && cursorY < Deditor.buffer.lines.size()) {
+            if (cursorY >= 0) {
                 StringBuilder line = Deditor.buffer.lines.get(cursorY);
-
                 for (int i = 0; i < cursorX && i < line.length(); ) {
                     int codePoint = line.codePointAt(i);
                     Font font = resolveFontForGlyph(codePoint);
@@ -89,10 +132,6 @@ public class SkiaRenderer implements IRender {
                 }
             }
 
-            if (x < 0) {
-                x = 0;
-            }
-
             float y = cursorY * lineHeight;
 
             canvas.drawRect(Rect.makeXYWH(x, y, cursorWidth, lineHeight), cursorColor);
@@ -100,6 +139,7 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderText() {
+//        SyntaxHighlighter.parse(Language.JAVA, Deditor.buffer.getSource());
         for (int i = 0; i < Deditor.buffer.lines.size(); i++) {
             StringBuilder line = Deditor.buffer.lines.get(i);
             drawStringWithFontFallback(line.toString(), 0, 24 + i * lineHeight, textPaint);
@@ -131,5 +171,4 @@ public class SkiaRenderer implements IRender {
         context.flush();
         surface.flushAndSubmit();
     }
-
 }
