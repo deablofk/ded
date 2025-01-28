@@ -60,10 +60,8 @@ public class SyntaxHighlighter {
 
     private static Paint getPaintForType(String type) {
         Paint paint = new Paint();
-
-        Map<String, Integer> mapTheme = Deditor.config.theme;
+        Map<String, Integer> mapTheme = Deditor.config.treesitter;
         paint.setColor(mapTheme.getOrDefault(type, mapTheme.getOrDefault("default", 0xFFFFFFFF)));
-
         return paint;
     }
 }

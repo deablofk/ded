@@ -9,6 +9,8 @@ public class TextBuffer {
     public List<StringBuilder> lines = new ArrayList<>();
     public int cursorX = 0;
     public int cursorY = 0;
+    public int offsetX = 0;
+    public int offsetY = 0;
     public File file;
     public FileChunkLoader fileChunkLoader;
     public List<String> currentChunk;
@@ -22,13 +24,7 @@ public class TextBuffer {
         loadInitialChunk();
     }
 
-    public TextBuffer(List<String> lines, File file) {
-        this.file = file;
-        lines.stream().map(StringBuilder::new).forEach(this.lines::add);
-    }
-
     private void loadInitialChunk() {
-//        lines = fileChunkLoader.loadChunckByLineOffset().stream().map(StringBuilder::new).collect(Collectors.toList());
         lines = fileChunkLoader.loadChunckByByteOffset().stream().map(StringBuilder::new).collect(Collectors.toList());
     }
 

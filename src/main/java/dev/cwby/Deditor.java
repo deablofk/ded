@@ -1,7 +1,7 @@
 package dev.cwby;
 
 import dev.cwby.config.ConfigurationParser;
-import dev.cwby.config.EditorConfig;
+import dev.cwby.config.data.EditorConfig;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
@@ -14,7 +14,6 @@ public class Deditor {
     public static Engine engine = new Engine();
     public static TextBuffer buffer = new TextBuffer();
     private static TextInteractionMode MODE = NAVIGATION;
-    public static int scrollOffsetY = 10;
     public static EditorConfig config;
 
     public void start() {

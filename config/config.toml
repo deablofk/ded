@@ -1,11 +1,15 @@
 [cursor]
 blink = 500 # cursor blink interval
+color = "#55888888"
 
 [font]
 family = "Iosevka Nerd Font"
 size = 24
 
 [theme]
+background = "#FF1B1B1B"
+
+[treesitter]
 # program
 program = "#000099" # Dark Blue (Program Structure)
 

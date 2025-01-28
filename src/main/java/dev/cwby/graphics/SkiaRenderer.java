@@ -2,7 +2,7 @@ package dev.cwby.graphics;
 
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
-import dev.cwby.config.FontConfig;
+import dev.cwby.config.ConfigurationParser;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;
@@ -32,17 +32,17 @@ public class SkiaRenderer implements IRender {
 
     private final Font font;
 
-    private static boolean cursorVisible = true;
-    private static long lastBlinkTime = 0;
-    private static final int BLINK_INTERVAL = 500; // 500ms
-    private static float cursorWidth;
-    private static final Paint cursorColor = new Paint().setColor(0x55888888);
+    private boolean cursorVisible = true;
+    private long lastBlinkTime = 0;
+    private float cursorWidth;
+    private final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.cursor.color));
+    private final Map<Integer, Font> codePointFontCache = new HashMap<>();
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
         onResize(1280, 720);
-        textPaint = new Paint().setColor(0xFFFFFFFF);
-        FontConfig fontConfig = Deditor.config.font;
+        textPaint = new Paint().setColor(Deditor.config.treesitter.get("default"));
+        var fontConfig = Deditor.config.font;
         this.fallbackTypefaces.add(Typeface.makeFromName(fontConfig.family, FontStyle.NORMAL));
         this.fallbackTypefaces.addAll(getAllSystemFonts());
         this.font = new Font(fallbackTypefaces.getFirst(), fontConfig.size);
@@ -55,7 +55,7 @@ public class SkiaRenderer implements IRender {
         List<Typeface> fonts = new ArrayList<>();
 
         try {
-            Files.walkFileTree(fontDir, new SimpleFileVisitor<java.nio.file.Path>() {
+            Files.walkFileTree(fontDir, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String fileName = file.toString().toLowerCase();
@@ -72,7 +72,6 @@ public class SkiaRenderer implements IRender {
         return fonts;
     }
 
-    private final Map<Integer, Font> codePointFontCache = new HashMap<>();
 
     private Font resolveFontForGlyph(int codePoint) {
         if (codePointFontCache.containsKey(codePoint)) {
@@ -172,9 +171,9 @@ public class SkiaRenderer implements IRender {
         }
     }
 
-    public void renderText(int scrollOffsetY, int viewportHeight) {
-        int startLine = (int) Math.max(0, scrollOffsetY / lineHeight);
-        int endLine = (int) Math.min(Deditor.buffer.lines.size(), (double) (scrollOffsetY + viewportHeight) / lineHeight);
+    public void renderText(int offsetY, int viewportHeight) {
+        int startLine = (int) Math.max(0, offsetY / lineHeight);
+        int endLine = (int) Math.min(Deditor.buffer.lines.size(), (double) (offsetY + viewportHeight) / lineHeight);
         for (int i = startLine; i < endLine; i++) {
             StringBuilder line = Deditor.buffer.lines.get(i);
             Node root = SyntaxHighlighter.parse(line.toString());
@@ -184,7 +183,7 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderBackground() {
-        canvas.clear(0xFF1B1B1B);
+        canvas.clear(ConfigurationParser.hexToInt(Deditor.config.theme.background));
     }
 
     public void renderStatusLine(float posY, float drawDuration) {
@@ -198,7 +197,7 @@ public class SkiaRenderer implements IRender {
     @Override
     public void render(int width, int height) {
         renderBackground();
-        renderText(Deditor.scrollOffsetY, height);
+        renderText(Deditor.buffer.offsetY, height);
         renderCursor();
         renderStatusLine(height - lineHeight, 0);
         context.flush();
