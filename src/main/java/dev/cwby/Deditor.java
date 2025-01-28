@@ -23,6 +23,8 @@ public class Deditor {
 
     private static Map<String, ICommand> COMMANDS = new HashMap<>();
 
+    public static int scrollOffsetY = 0;
+
     public Deditor() {
         var quit = new Quit();
         var edit = new Edit();

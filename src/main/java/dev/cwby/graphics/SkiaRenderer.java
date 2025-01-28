@@ -1,6 +1,7 @@
 package dev.cwby.graphics;
 
 import dev.cwby.Deditor;
+import dev.cwby.editor.FileChunkLoader;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;
@@ -102,16 +103,29 @@ public class SkiaRenderer implements IRender {
 
     private void drawHighlightedText(String text, float x, float y, Map<Integer, Paint> styles) {
         float offsetX = x;
+        var currentText = new StringBuilder();
+        Paint currentPaint = null;
         for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
             Paint paint = styles.getOrDefault(i, textPaint);
-            Font font = resolveFontForGlyph(codePoint);
 
-            String glyph = new String(Character.toChars(codePoint));
-            canvas.drawString(glyph, offsetX, y, font, paint);
+            if (currentPaint == null || !currentPaint.equals(paint)) {
+                if (!currentText.isEmpty()) {
+                    Font font = resolveFontForGlyph(codePoint);
+                    canvas.drawString(currentText.toString(), offsetX, y, font, currentPaint);
+                    offsetX += font.measureTextWidth(currentText.toString());
+                    currentText.setLength(0);
+                }
+                currentPaint = paint;
+            }
 
-            offsetX += font.measureTextWidth(glyph);
+            currentText.append(Character.toChars(codePoint));
             i += Character.charCount(codePoint);
+        }
+
+        if (!currentText.isEmpty()) {
+            Font font = resolveFontForGlyph(currentText.codePointAt(0));
+            canvas.drawString(currentText.toString(), offsetX, y, font, currentPaint);
         }
     }
 
@@ -156,8 +170,10 @@ public class SkiaRenderer implements IRender {
         }
     }
 
-    public void renderText() {
-        for (int i = 0; i < Deditor.buffer.lines.size(); i++) {
+    public void renderText(int scrollOffsetY, int viewportHeight) {
+        int startLine = (int) Math.max(0, scrollOffsetY / lineHeight);
+        int endLine = (int) Math.min(Deditor.buffer.lines.size(), (double) (scrollOffsetY + viewportHeight) / lineHeight);
+        for (int i = startLine; i < endLine; i++) {
             StringBuilder line = Deditor.buffer.lines.get(i);
             Node root = SyntaxHighlighter.parse(line.toString());
             Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
@@ -166,7 +182,7 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderBackground() {
-        canvas.clear(0xFF000000);
+        canvas.clear(0xFF1B1B1B);
     }
 
     public void renderStatusLine(float posY, float drawDuration) {
@@ -179,14 +195,10 @@ public class SkiaRenderer implements IRender {
 
     @Override
     public void render(int width, int height) {
-        long startTime = System.nanoTime();
         renderBackground();
-        renderText();
+        renderText(Deditor.scrollOffsetY, height);
         renderCursor();
-
-        long endTime = System.nanoTime();
-        float duration = (float) ((endTime - startTime) / 1_000_000.0);
-        renderStatusLine(height - lineHeight, duration);
+        renderStatusLine(height - lineHeight, 0);
         context.flush();
         surface.flushAndSubmit();
     }

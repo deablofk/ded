@@ -55,13 +55,26 @@ public class Engine {
         if (renderer == null) {
             throw new RuntimeException("Renderer cant be null");
         }
+        final double targetFPS = 100.0;
+        final double targetFrameTime = 1.0 / targetFPS;
         while (!glfwWindowShouldClose(window)) {
+            double frameStartTime = glfwGetTime();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             renderer.render(width, height);
 
             glfwSwapBuffers(window);
-            glfwPollEvents();
+            glfwWaitEventsTimeout(targetFrameTime);
+            double frameEndTime = glfwGetTime();
+            double elapsedTime = frameEndTime - frameStartTime;
+
+            if (elapsedTime < targetFrameTime) {
+                try {
+                    Thread.sleep((long) ((targetFrameTime - elapsedTime) * 1000));
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 

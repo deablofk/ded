@@ -19,7 +19,6 @@ public class Edit implements ICommand {
             if (file.exists()) {
                 try {
                     List<String> lines = Files.readAllLines(file.toPath());
-                    System.out.println(lines);
                     Deditor.buffer = new TextBuffer(lines, file);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
