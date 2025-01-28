@@ -3,7 +3,7 @@ package dev.cwby.config;
 import com.moandjiezana.toml.Toml;
 import dev.cwby.config.data.Cursor;
 import dev.cwby.config.data.EditorConfig;
-import dev.cwby.config.data.Font;
+import dev.cwby.config.data.FontConfig;
 import dev.cwby.config.data.Theme;
 
 import java.io.File;
@@ -17,7 +17,7 @@ public class ConfigurationParser {
 
         if (file.exists()) {
             Toml toml = new Toml().read(file);
-            Font font = toml.getTable("font").to(Font.class);
+            FontConfig font = toml.getTable("font").to(FontConfig.class);
             Cursor cursor = toml.getTable("cursor").to(Cursor.class);
             Theme theme = toml.getTable("theme").to(Theme.class);
             Map<String, Integer> treesitter = parseTheme(toml.getTable("treesitter"));

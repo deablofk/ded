@@ -1,5 +1,6 @@
 package dev.cwby.input;
 
+import dev.cwby.BufferManager;
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextBuffer;
@@ -25,7 +26,7 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handleChar(long codePoint) {
         switch (Deditor.getBufferMode()) {
             case COMMAND -> CommandHandler.appendBuffer((char) codePoint);
-            case INSERT -> Deditor.buffer.insertCharAtCursor((char) codePoint);
+            case INSERT -> BufferManager.getActualBuffer().insertCharAtCursor((char) codePoint);
         }
     }
 
@@ -33,11 +34,11 @@ public class GlobalKeyHandler implements IKeyHandler {
         if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
             switch (key) {
                 case GLFW_KEY_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
-                case GLFW_KEY_ENTER -> Deditor.buffer.newLine();
-                case GLFW_KEY_BACKSPACE -> Deditor.buffer.removeChar();
+                case GLFW_KEY_ENTER -> BufferManager.getActualBuffer().newLine();
+                case GLFW_KEY_BACKSPACE -> BufferManager.getActualBuffer().removeChar();
                 case GLFW_KEY_TAB -> {
                     for (int i = 0; i < 4; i++) {
-                        Deditor.buffer.appendChar(' ');
+                        BufferManager.getActualBuffer().appendChar(' ');
                     }
                 }
             }
@@ -79,23 +80,23 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     public void handleNavigation(int key, int action, int mods) {
-        TextBuffer buffer = Deditor.buffer;
+        TextBuffer buffer = BufferManager.getActualBuffer();
         if (action == GLFW_RELEASE) {
             switch (key) {
                 case GLFW_KEY_I -> Deditor.setBufferMode(INSERT);
                 case GLFW_KEY_V -> Deditor.setBufferMode(SELECT);
                 case GLFW_KEY_O -> {
                     if (mods == GLFW_MOD_SHIFT) {
-                        Deditor.buffer.newLineUp();
+                        BufferManager.getActualBuffer().newLineUp();
                         Deditor.setBufferMode(INSERT);
                     } else {
-                        Deditor.buffer.newLineDown();
+                        BufferManager.getActualBuffer().newLineDown();
                         Deditor.setBufferMode(INSERT);
                     }
                 }
                 case GLFW_KEY_D -> {
                     if (lastKey == GLFW_KEY_D) {
-                        Deditor.buffer.deleteCurrentLine();
+                        BufferManager.getActualBuffer().deleteCurrentLine();
                         lastKey = -1;
                     } else {
                         lastKey = key;

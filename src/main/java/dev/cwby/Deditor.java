@@ -2,7 +2,6 @@ package dev.cwby;
 
 import dev.cwby.config.ConfigurationParser;
 import dev.cwby.config.data.EditorConfig;
-import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.SkiaRenderer;
@@ -12,7 +11,6 @@ import static dev.cwby.editor.TextInteractionMode.NAVIGATION;
 
 public class Deditor {
     public static Engine engine = new Engine();
-    public static TextBuffer buffer = new TextBuffer();
     private static TextInteractionMode MODE = NAVIGATION;
     public static EditorConfig config;
 
@@ -38,6 +36,11 @@ public class Deditor {
 
     public static void main(String[] args) {
         Deditor deditor = new Deditor();
+        if (args.length == 0) {
+            BufferManager.addEmptyBuffer();
+        } else {
+            CommandHandler.executeCommand("vs " + args[1]);
+        }
         deditor.start();
     }
 }

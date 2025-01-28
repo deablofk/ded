@@ -1,5 +1,6 @@
 package dev.cwby.graphics;
 
+import dev.cwby.graphics.layout.RegionNode;
 import dev.cwby.input.IKeyHandler;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
@@ -89,7 +90,7 @@ public class Engine {
                 resizeCallback.free();
                 resizeCallback.close();
             }
-            resizeCallback = glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
+            resizeCallback = glfwSetFramebufferSizeCallback(window, (_, width, height) -> {
                 renderer.onResize(width, height);
                 this.width = width;
                 this.height = height;

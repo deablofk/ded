@@ -14,6 +14,7 @@ public class TextBuffer {
     public File file;
     public FileChunkLoader fileChunkLoader;
     public List<String> currentChunk;
+    public int bufferId = 0;
 
     public TextBuffer() {
         this.lines.add(new StringBuilder());

@@ -1,5 +1,6 @@
 package dev.cwby.commands;
 
+import dev.cwby.BufferManager;
 import dev.cwby.Deditor;
 
 import java.io.File;
@@ -10,9 +11,9 @@ import java.util.List;
 public class Save implements ICommand {
     @Override
     public boolean run(String[] args) {
-        File file = Deditor.buffer.file;
+        File file = BufferManager.getActualBuffer().file;
         if (file != null) {
-            List<String> lines = Deditor.buffer.getLines();
+            List<String> lines = BufferManager.getActualBuffer().getLines();
             try {
                 Files.write(file.toPath(), lines);
             } catch (IOException e) {

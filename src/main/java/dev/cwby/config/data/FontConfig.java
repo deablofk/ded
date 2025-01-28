@@ -1,10 +1,10 @@
 package dev.cwby.config.data;
 
-public class Font {
+public class FontConfig {
     public String family;
     public int size;
 
-    public Font() {
+    public FontConfig() {
     }
 
 }

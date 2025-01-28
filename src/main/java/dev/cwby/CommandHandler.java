@@ -1,9 +1,6 @@
 package dev.cwby;
 
-import dev.cwby.commands.Edit;
-import dev.cwby.commands.ICommand;
-import dev.cwby.commands.Quit;
-import dev.cwby.commands.Save;
+import dev.cwby.commands.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,19 +20,17 @@ public class CommandHandler {
         COMMANDS.put("w", save);
         COMMANDS.put("q", quit);
         COMMANDS.put("e", edit);
+        COMMANDS.put("vs", new VerticalSplit());
     }
 
-    //all commands must prefix be lowercase
     public static void setCommand(String command, ICommand mode) {
         COMMANDS.put(command.toLowerCase(), mode);
     }
 
-    //all commands prefix must be lowercase
     public static ICommand getCommand(String command) {
         return COMMANDS.get(command.toLowerCase());
     }
 
-    // return true if command found and properly executed, otherwise will return false, if the command was found but not properly executed the command instance will return false
     public static boolean executeCommand(String fullCommand) {
         String[] args = fullCommand.split(" ");
         String name = args[0].toLowerCase();
@@ -51,7 +46,6 @@ public class CommandHandler {
         return false;
     }
 
-    // reset the command buffer
     public static void clearCommandBuffer() {
         buffer.setLength(0);
     }
