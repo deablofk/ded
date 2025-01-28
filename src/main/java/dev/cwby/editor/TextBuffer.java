@@ -3,20 +3,32 @@ package dev.cwby.editor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TextBuffer {
-    public final List<StringBuilder> lines = new ArrayList<>();
+    public List<StringBuilder> lines = new ArrayList<>();
     public int cursorX = 0;
     public int cursorY = 0;
     public File file;
+    public FileChunkLoader fileChunkLoader;
+    public List<String> currentChunk;
 
     public TextBuffer() {
         this.lines.add(new StringBuilder());
     }
 
+    public TextBuffer(FileChunkLoader loader) {
+        fileChunkLoader = loader;
+        loadInitialChunk();
+    }
+
     public TextBuffer(List<String> lines, File file) {
         this.file = file;
         lines.stream().map(StringBuilder::new).forEach(this.lines::add);
+    }
+
+    private void loadInitialChunk() {
+        lines = fileChunkLoader.loadChunk().stream().map(StringBuilder::new).collect(Collectors.toList());
     }
 
     public StringBuilder getCurrentLine() {

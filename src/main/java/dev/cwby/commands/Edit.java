@@ -2,12 +2,10 @@ package dev.cwby.commands;
 
 
 import dev.cwby.Deditor;
+import dev.cwby.editor.FileChunkLoader;
 import dev.cwby.editor.TextBuffer;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.List;
 
 public class Edit implements ICommand {
 
@@ -17,12 +15,7 @@ public class Edit implements ICommand {
             System.out.println(args[1]);
             File file = new File(args[1]);
             if (file.exists()) {
-                try {
-                    List<String> lines = Files.readAllLines(file.toPath());
-                    Deditor.buffer = new TextBuffer(lines, file);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                Deditor.buffer = new TextBuffer(new FileChunkLoader(file, 46));
                 return true;
             } else {
                 return false;

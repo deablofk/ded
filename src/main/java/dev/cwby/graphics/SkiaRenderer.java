@@ -35,7 +35,7 @@ public class SkiaRenderer implements IRender {
     private static long lastBlinkTime = 0;
     private static final int BLINK_INTERVAL = 500; // 500ms
     private static float cursorWidth;
-    private static final Paint cursorColor = new Paint().setColor(0xFF888888);
+    private static final Paint cursorColor = new Paint().setColor(0x55888888);
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
