@@ -1,5 +1,6 @@
 package dev.cwby.input;
 
+import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextBuffer;
 
@@ -12,7 +13,7 @@ public class GlobalKeyHandler implements IKeyHandler {
 
     @Override
     public void handleKey(int key, int action, int mods) {
-        switch (Deditor.getMode()) {
+        switch (Deditor.getBufferMode()) {
             case NAVIGATION -> handleNavigation(key, action, mods);
             case SELECT -> handleSelect(key, action, mods);
             case INSERT -> handleInsert(key, action, mods);
@@ -22,8 +23,8 @@ public class GlobalKeyHandler implements IKeyHandler {
 
     @Override
     public void handleChar(long codePoint) {
-        switch (Deditor.getMode()) {
-            case COMMAND -> Deditor.commandBuffer.append((char) codePoint);
+        switch (Deditor.getBufferMode()) {
+            case COMMAND -> CommandHandler.appendBuffer((char) codePoint);
             case INSERT -> Deditor.buffer.insertCharAtCursor((char) codePoint);
         }
     }
@@ -31,11 +32,11 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handleInsert(int key, int action, int mods) {
         if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
             switch (key) {
-                case GLFW_KEY_ESCAPE -> Deditor.setMode(NAVIGATION);
+                case GLFW_KEY_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
                 case GLFW_KEY_ENTER -> Deditor.buffer.newLine();
                 case GLFW_KEY_BACKSPACE -> Deditor.buffer.removeChar();
                 case GLFW_KEY_TAB -> {
-                    for (int i = 0; i < 4; i ++){
+                    for (int i = 0; i < 4; i++) {
                         Deditor.buffer.appendChar(' ');
                     }
                 }
@@ -45,7 +46,7 @@ public class GlobalKeyHandler implements IKeyHandler {
 
     public void handleSelect(int key, int action, int mods) {
         switch (key) {
-            case GLFW_KEY_ESCAPE -> Deditor.setMode(NAVIGATION);
+            case GLFW_KEY_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
             case GLFW_KEY_Y -> {
                 // handle yank
                 // initial
@@ -58,19 +59,19 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handleCommand(int key, int action, int mods) {
         switch (key) {
             case GLFW_KEY_ESCAPE -> {
-                Deditor.setMode(NAVIGATION);
-                Deditor.clearCommandBuffer();
+                Deditor.setBufferMode(NAVIGATION);
+                CommandHandler.clearCommandBuffer();
             }
             case GLFW_KEY_ENTER -> {
-                Deditor.executeCommand(Deditor.commandBuffer.toString());
-                Deditor.clearCommandBuffer();
-                Deditor.setMode(NAVIGATION);
+                CommandHandler.executeCommand(CommandHandler.getBuffer());
+                CommandHandler.clearCommandBuffer();
+                Deditor.setBufferMode(NAVIGATION);
             }
             case GLFW_KEY_BACKSPACE -> {
                 if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
-                    int length = Deditor.commandBuffer.length() - 1;
+                    int length = CommandHandler.getBuffer().length() - 1;
                     if (length >= 0) {
-                        Deditor.commandBuffer.deleteCharAt(length);
+                        CommandHandler.getBuilderBuffer().deleteCharAt(length);
                     }
                 }
             }
@@ -81,15 +82,15 @@ public class GlobalKeyHandler implements IKeyHandler {
         TextBuffer buffer = Deditor.buffer;
         if (action == GLFW_RELEASE) {
             switch (key) {
-                case GLFW_KEY_I -> Deditor.setMode(INSERT);
-                case GLFW_KEY_V -> Deditor.setMode(SELECT);
+                case GLFW_KEY_I -> Deditor.setBufferMode(INSERT);
+                case GLFW_KEY_V -> Deditor.setBufferMode(SELECT);
                 case GLFW_KEY_O -> {
                     if (mods == GLFW_MOD_SHIFT) {
                         Deditor.buffer.newLineUp();
-                        Deditor.setMode(INSERT);
+                        Deditor.setBufferMode(INSERT);
                     } else {
                         Deditor.buffer.newLineDown();
-                        Deditor.setMode(INSERT);
+                        Deditor.setBufferMode(INSERT);
                     }
                 }
                 case GLFW_KEY_D -> {
@@ -101,7 +102,7 @@ public class GlobalKeyHandler implements IKeyHandler {
                     }
                 }
                 case 47 -> {
-                    if (mods == GLFW_MOD_SHIFT) Deditor.setMode(COMMAND);
+                    if (mods == GLFW_MOD_SHIFT) Deditor.setBufferMode(COMMAND);
                 }
                 default -> {
                 }

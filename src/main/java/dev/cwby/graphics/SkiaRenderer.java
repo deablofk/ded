@@ -1,6 +1,8 @@
 package dev.cwby.graphics;
 
+import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
+import dev.cwby.config.FontConfig;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;
@@ -40,9 +42,10 @@ public class SkiaRenderer implements IRender {
         context = DirectContext.makeGL();
         onResize(1280, 720);
         textPaint = new Paint().setColor(0xFFFFFFFF);
-        this.fallbackTypefaces.add(Typeface.makeFromName("Iosevka Nerd Font", FontStyle.NORMAL));
+        FontConfig fontConfig = Deditor.config.font;
+        this.fallbackTypefaces.add(Typeface.makeFromName(fontConfig.family, FontStyle.NORMAL));
         this.fallbackTypefaces.addAll(getAllSystemFonts());
-        this.font = new Font(fallbackTypefaces.getFirst(), 24);
+        this.font = new Font(fallbackTypefaces.getFirst(), fontConfig.size);
         lineHeight = font.getMetrics().getHeight();
         cursorWidth = font.getMetrics().getAvgCharWidth();
     }
@@ -139,7 +142,7 @@ public class SkiaRenderer implements IRender {
     public void renderCursor() {
         long now = System.currentTimeMillis();
 
-        if (now - lastBlinkTime >= BLINK_INTERVAL) {
+        if (now - lastBlinkTime >= Deditor.config.cursor.blink) {
             cursorVisible = !cursorVisible;
             lastBlinkTime = now;
         }
@@ -161,9 +164,9 @@ public class SkiaRenderer implements IRender {
             }
 
             float y = cursorY * lineHeight;
-            if (Deditor.getMode() == TextInteractionMode.NAVIGATION) {
+            if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION) {
                 canvas.drawRect(Rect.makeXYWH(x, y, cursorWidth, lineHeight), cursorColor);
-            } else if (Deditor.getMode() == TextInteractionMode.INSERT) {
+            } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
                 canvas.drawRect(Rect.makeXYWH(x, y, 2, lineHeight), cursorColor);
             }
         }
@@ -185,10 +188,10 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderStatusLine(float posY, float drawDuration) {
-        if (Deditor.getMode() == TextInteractionMode.COMMAND) {
-            drawStringWithFontFallback(":" + Deditor.commandBuffer.toString(), 0, posY, textPaint);
+        if (Deditor.getBufferMode() == TextInteractionMode.COMMAND) {
+            drawStringWithFontFallback(":" + CommandHandler.getBuffer(), 0, posY, textPaint);
         } else {
-            drawStringWithFontFallback(Deditor.getMode() + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
+            drawStringWithFontFallback(Deditor.getBufferMode() + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
         }
     }
 

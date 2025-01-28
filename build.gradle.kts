@@ -106,8 +106,10 @@ dependencies {
     implementation("io.github.humbleui:skija-linux-x64:0.116.3")
     // https://central.sonatype.com/artifact/io.github.tree-sitter/jtreesitter
     implementation("io.github.tree-sitter:jtreesitter:0.24.1")
+    // https://central.sonatype.com/artifact/com.moandjiezana.toml/toml4j
+    implementation("com.moandjiezana.toml:toml4j:0.7.2")
 }
 
-application{
+application {
     mainClass = "dev.cwby.Deditor"
 }

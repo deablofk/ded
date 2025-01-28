@@ -1,0 +1,85 @@
+[cursor]
+blink = 500 # cursor blink interval
+
+[font]
+family = "Iosevka Nerd Font"
+size = 24
+
+[theme]
+# program
+program = "#000099" # Dark Blue (Program Structure)
+
+# variables
+local_variable_declaration = "#CC7832" # Orange (Variables)
+type_identifier = "#4E90F0" # Light Blue (Types)
+variable_declarator = "#9876AA" # Purple (Identifiers)
+identifier = "#9876AA" # Purple (Identifiers)
+
+# keywords
+public = "#FFC66D" # Yellow (Keywords)
+private = "#FFC66D"
+protected = "#FFC66D"
+static = "#FFC66D"
+final = "#FFC66D"
+class = "#FFC66D"
+interface = "#FFC66D"
+enum = "#FFC66D"
+if = "#FFC66D"
+else = "#FFC66D"
+while = "#FFC66D"
+for = "#FFC66D"
+return = "#FFC66D"
+break = "#FFC66D"
+continue = "#FFC66D"
+void = "#FFC66D"
+int = "#FFC66D"
+long = "#FFC66D"
+double = "#FFC66D"
+float = "#FFC66D"
+boolean = "#FFC66D"
+new = "#FFC66D"
+import = "#FFC66D"
+package = "#FFC66D"
+
+# operators
+"=" = "#CC7832" # Orange (Operators)
+"+" = "#CC7832"
+"-" = "#CC7832"
+"*" = "#CC7832"
+"/" = "#CC7832"
+"%" = "#CC7832"
+"==" = "#CC7832"
+"!=" = "#CC7832"
+">" = "#CC7832"
+"<" = "#CC7832"
+">=" = "#CC7832"
+"<=" = "#CC7832"
+"&&" = "#CC7832"
+"||" = "#CC7832"
+"!" = "#CC7832"
+
+# strings
+string_literal = "#6A8759" # Green (Strings)
+"\"" = "#6A8759" # Green (Strings)
+string_fragment = "#6A8759" # Green (Strings)
+character_literal = "#6A8759" # Green (Characters)
+
+# numbers
+decimal_integer_literal = "#6897BB" # Light Blue (Numbers)
+floating_point_literal = "#6897BB" # Light Blue (Numbers)
+
+# punctuation
+";" = "#CC7832" # Orange (Punctuation)
+"," = "#CC7832"
+"." = "#CC7832"
+
+# comments
+comment = "#808080" # Gray (Comments)
+line_comment = "#808080"
+block_comment = "#808080"
+
+# annotations
+annotation = "#BBB529" # Yellowish-Green (Annotations)
+
+# default color for unknow type
+default = "#A9B7C6" # Light Gray
