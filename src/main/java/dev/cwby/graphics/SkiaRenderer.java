@@ -1,7 +1,6 @@
 package dev.cwby.graphics;
 
 import dev.cwby.Deditor;
-import dev.cwby.editor.FileChunkLoader;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.*;

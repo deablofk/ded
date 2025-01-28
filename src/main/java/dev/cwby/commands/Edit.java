@@ -15,7 +15,7 @@ public class Edit implements ICommand {
             System.out.println(args[1]);
             File file = new File(args[1]);
             if (file.exists()) {
-                Deditor.buffer = new TextBuffer(new FileChunkLoader(file, 46));
+                Deditor.buffer = new TextBuffer(new FileChunkLoader(file, 10240));
                 return true;
             } else {
                 return false;

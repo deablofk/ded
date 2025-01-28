@@ -28,7 +28,8 @@ public class TextBuffer {
     }
 
     private void loadInitialChunk() {
-        lines = fileChunkLoader.loadChunk().stream().map(StringBuilder::new).collect(Collectors.toList());
+//        lines = fileChunkLoader.loadChunckByLineOffset().stream().map(StringBuilder::new).collect(Collectors.toList());
+        lines = fileChunkLoader.loadChunckByByteOffset().stream().map(StringBuilder::new).collect(Collectors.toList());
     }
 
     public StringBuilder getCurrentLine() {
