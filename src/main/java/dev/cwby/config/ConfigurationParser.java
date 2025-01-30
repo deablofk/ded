@@ -9,10 +9,11 @@ import dev.cwby.config.data.Theme;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ConfigurationParser {
 
-    public static EditorConfig readConfiguration(String path) {
+    public static Optional<EditorConfig> read(String path) {
         var file = new File(path);
 
         if (file.exists()) {
@@ -21,9 +22,9 @@ public class ConfigurationParser {
             Cursor cursor = toml.getTable("cursor").to(Cursor.class);
             Theme theme = toml.getTable("theme").to(Theme.class);
             Map<String, Integer> treesitter = parseTheme(toml.getTable("treesitter"));
-            return new EditorConfig(cursor, font, theme, treesitter);
+            return Optional.of(new EditorConfig(cursor, font, theme, treesitter));
         }
-        return null;
+        return Optional.empty();
     }
 
     private static Map<String, Integer> parseTheme(Toml themeTable) {

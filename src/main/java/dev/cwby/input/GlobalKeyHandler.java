@@ -4,148 +4,118 @@ import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
-import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
+import org.lwjgl.sdl.SDLClipboard;
+import org.lwjgl.sdl.SDLKeyboard;
+import org.lwjgl.sdl.SDL_Event;
 
 import static dev.cwby.editor.TextInteractionMode.*;
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.sdl.SDLKeycode.*;
 
 public class GlobalKeyHandler implements IKeyHandler {
 
     private int lastKey = -1;
 
     @Override
-    public void handleKey(int key, int scanCode, int action, int mods) {
+    public void handle(SDL_Event e) {
         TextInteractionMode mode = Deditor.getBufferMode();
+        int keyCode = e.key().key();
+        short mod = e.key().mod();
+        int keyChar = SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
 
         if (mode == NAVIGATION) {
-            handleNavigation(key, action, mods);
+            handleNavigation((char) keyChar, keyCode, mod);
         } else if (mode == INSERT) {
-            handleInsert(key, scanCode, action, mods);
+            handleInsert((char) keyChar, keyCode, mod);
         } else if (mode == SELECT) {
-            handleSelect(key, action, mods);
+            handleSelect((char) keyChar, keyCode, mod);
         } else if (mode == COMMAND) {
-            handleCommand(key, action, mods);
+            handleCommand((char) keyChar, keyCode, mod);
         }
     }
 
-    @Override
-    public void handleChar(long codePoint) {
+
+    public void handleInsert(char keyChar, int keyCode, short mod) {
         TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
-        switch (Deditor.getBufferMode()) {
-            case COMMAND -> CommandHandler.appendBuffer((char) codePoint);
-            case INSERT -> {
-                if (codePoint != 'V' && codePoint != 'v') {
-                    buffer.insertCharAtCursor((char) codePoint);
+        switch (keyCode) {
+            case SDLK_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
+            case SDLK_RETURN -> buffer.newLine();
+            case SDLK_BACKSPACE -> buffer.removeChar();
+            case SDLK_TAB -> {
+                for (int i = 0; i < 4; i++) {
+                    buffer.appendChar(' ');
                 }
             }
+            case SDLK_V -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    String clipboard = SDLClipboard.SDL_GetClipboardText();
+                    buffer.insertTextAtCursor(clipboard);
+                } else {
+                    buffer.appendChar(keyChar);
+                }
+            }
+            case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT -> {
+            }
+            default -> buffer.appendChar(keyChar);
         }
     }
 
-    public void handleInsert(int key, int scancode, int action, int mods) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
-        if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
-            switch (key) {
-                case GLFW_KEY_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
-                case GLFW_KEY_ENTER -> buffer.newLine();
-                case GLFW_KEY_BACKSPACE -> buffer.removeChar();
-                case GLFW_KEY_TAB -> {
-                    for (int i = 0; i < 4; i++) {
-                        buffer.appendChar(' ');
-                    }
-                }
-                case GLFW_KEY_V -> {
-                    if (mods == GLFW_MOD_CONTROL) {
-                        String clipboard = glfwGetClipboardString(Engine.window);
-                        buffer.insertTextAtCursor(clipboard);
-                    } else {
-                        String keyName = glfwGetKeyName(key, scancode);
-                        if (keyName != null) {
-                            if (mods == GLFW_MOD_SHIFT) {
-                                buffer.appendChar(keyName.toLowerCase().charAt(0));
-                            } else {
-                                buffer.appendChar(keyName.charAt(0));
-                            }
-                        }
-                    }
-                }
-            }
+    public void handleSelect(char keyChar, int keyCode, short mod) {
+        switch (keyChar) {
+            case SDLK_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
         }
     }
 
-    public void handleSelect(int key, int action, int mods) {
-        switch (key) {
-            case GLFW_KEY_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
-            case GLFW_KEY_Y -> {
-                // handle yank
-                // initial
-            }
-            default -> {
-            }
-        }
-    }
-
-    public void handleCommand(int key, int action, int mods) {
-        switch (key) {
-            case GLFW_KEY_ESCAPE -> {
+    public void handleCommand(char keyChar, int keyCode, short mod) {
+        switch (keyCode) {
+            case SDLK_ESCAPE -> {
                 Deditor.setBufferMode(NAVIGATION);
                 CommandHandler.clearCommandBuffer();
             }
-            case GLFW_KEY_ENTER -> {
+            case SDLK_RETURN -> {
                 CommandHandler.executeCommand(CommandHandler.getBuffer());
                 CommandHandler.clearCommandBuffer();
                 Deditor.setBufferMode(NAVIGATION);
             }
-            case GLFW_KEY_BACKSPACE -> {
-                if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
-                    int length = CommandHandler.getBuffer().length() - 1;
-                    if (length >= 0) {
-                        CommandHandler.getBuilderBuffer().deleteCharAt(length);
-                    }
+            case SDLK_BACKSPACE -> {
+                int length = CommandHandler.getBuffer().length() - 1;
+                if (length >= 0) {
+                    CommandHandler.getBuilderBuffer().deleteCharAt(length);
                 }
             }
+            case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT -> {
+            }
+            default -> CommandHandler.appendBuffer(keyChar);
         }
     }
 
-    public void handleNavigation(int key, int action, int mods) {
+    public void handleNavigation(int keyChar, int keyCode, short mod) {
         TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
-        if (action == GLFW_RELEASE) {
-            switch (key) {
-                case GLFW_KEY_I -> Deditor.setBufferMode(INSERT);
-                case GLFW_KEY_V -> Deditor.setBufferMode(SELECT);
-                case GLFW_KEY_O -> {
-                    if (mods == GLFW_MOD_SHIFT) {
-                        buffer.newLineUp();
-                        Deditor.setBufferMode(INSERT);
-                    } else {
-                        buffer.newLineDown();
-                        Deditor.setBufferMode(INSERT);
-                    }
-                }
-                case GLFW_KEY_D -> {
-                    if (lastKey == GLFW_KEY_D) {
-                        buffer.deleteCurrentLine();
-                        lastKey = -1;
-                    } else {
-                        lastKey = key;
-                    }
-                }
-                case 47 -> {
-                    if (mods == GLFW_MOD_SHIFT) Deditor.setBufferMode(COMMAND);
-                }
-                default -> {
+        switch (keyChar) {
+            case 'i' -> Deditor.setBufferMode(INSERT);
+            case 'v' -> Deditor.setBufferMode(SELECT);
+            case 'o' -> {
+                buffer.newLineDown();
+                Deditor.setBufferMode(INSERT);
+            }
+            case 'O' -> {
+                buffer.newLineUp();
+                Deditor.setBufferMode(INSERT);
+            }
+            case 'd' -> {
+                if (lastKey == 'd') {
+                    buffer.deleteCurrentLine();
+                    lastKey = -1;
+                } else {
+                    lastKey = keyChar;
                 }
             }
-        } else {
-            switch (key) {
-                case GLFW_KEY_H -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY);
-                case GLFW_KEY_J -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY);
-                case GLFW_KEY_K -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY);
-                case GLFW_KEY_L -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY);
-                default -> {
-                }
-            }
+            case ':' -> Deditor.setBufferMode(COMMAND);
+            case 'h' -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY);
+            case 'j' -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY);
+            case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY);
+            case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY);
         }
     }
 }

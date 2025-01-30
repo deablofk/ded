@@ -3,7 +3,7 @@ blink = 500 # cursor blink interval
 color = "#77FFFFFF"
 
 [font]
-family = "JetBrains Mono"
+family = "Iosevka Nerd Font Mono"
 size = 20
 
 [theme]

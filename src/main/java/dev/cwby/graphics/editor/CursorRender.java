@@ -21,7 +21,7 @@ public class CursorRender {
     private final FontManager fontManager;
 
     public CursorRender(Canvas canvas, FontManager fontManager) {
-        cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.cursor.color));
+        cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color));
         this.canvas = canvas;
         this.fontManager = fontManager;
     }
@@ -33,7 +33,7 @@ public class CursorRender {
     public void render() {
         long now = System.currentTimeMillis();
 
-        if (now - lastBlinkTime >= Deditor.config.cursor.blink) {
+        if (now - lastBlinkTime >= Deditor.getConfig().cursor.blink) {
             cursorVisible = !cursorVisible;
             lastBlinkTime = now;
         }

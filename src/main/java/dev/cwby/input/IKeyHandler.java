@@ -1,8 +1,8 @@
 package dev.cwby.input;
 
+import org.lwjgl.sdl.SDL_Event;
+
 public interface IKeyHandler {
 
-    void handleKey(int key, int scancode, int action, int mods);
-
-    void handleChar(long codePoint);
+    void handle(SDL_Event event);
 }
