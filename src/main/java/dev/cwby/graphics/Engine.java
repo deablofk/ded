@@ -28,6 +28,10 @@ public class Engine {
         return height;
     }
 
+    public static long getWindow() {
+        return window;
+    }
+
     public static void setShouldClose(boolean shouldClose) {
         Engine.shouldClose = shouldClose;
     }
@@ -58,6 +62,9 @@ public class Engine {
                         break;
                     case SDLEvents.SDL_EVENT_KEY_DOWN:
                         keyHandler.handle(event);
+                        break;
+                    case SDLEvents.SDL_EVENT_TEXT_INPUT:
+                        keyHandler.handleInput(event);
                         break;
                     case SDLEvents.SDL_EVENT_WINDOW_RESIZED:
                         var display = event.display();

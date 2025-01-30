@@ -1,8 +1,5 @@
 package dev.cwby.editor;
 
-import dev.cwby.graphics.Engine;
-import dev.cwby.graphics.FontManager;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +32,7 @@ public class TextBuffer {
     }
 
     public void appendChar(char c) {
-        getCurrentLine().append(c);
-        this.cursorX++;
+        getCurrentLine().insert(this.cursorX++, c);
     }
 
     public void insertCharAtCursor(char c) {
@@ -60,6 +56,38 @@ public class TextBuffer {
             lines.get(cursorY).append(currentLine);
         }
     }
+
+    public void removeCharAfterCursor() {
+        if (cursorX < getCurrentLine().length()) {
+            getCurrentLine().deleteCharAt(cursorX);
+        } else if (cursorY < lines.size() - 1) {
+            StringBuilder nextLine = lines.remove(cursorY + 1);
+            getCurrentLine().append(nextLine);
+        }
+    }
+
+    public void removeWordAfterCursor() {
+        StringBuilder currentLine = getCurrentLine();
+
+        // Skip any leading whitespace (if cursor is on a space)
+        while (cursorX < currentLine.length() && currentLine.charAt(cursorX) == ' ') {
+            currentLine.deleteCharAt(cursorX); // Remove space
+        }
+
+        // Now delete the next word until a space, uppercase letter, or non-letter symbol
+        while (cursorX < currentLine.length()) {
+            char c = currentLine.charAt(cursorX);
+
+            // Stop when a space, uppercase letter, or non-letter symbol is encountered
+            if (c == ' ' || Character.isUpperCase(c) || !Character.isLetter(c)) {
+                break;
+            }
+
+            // Delete the character and move the cursor
+            currentLine.deleteCharAt(cursorX);
+        }
+    }
+
 
     public void newLineUp() {
         if (cursorY < 0) {
@@ -93,12 +121,11 @@ public class TextBuffer {
         }
     }
 
-    public void moveCursor(int x, int y) {
-        int visibleLines = (int) ((Engine.getHeight() - FontManager.getLineHeight()) / FontManager.getLineHeight());
+    public void moveCursor(int x, int y, int visibleLines) {
         this.cursorY = Math.min(Math.max(0, y), this.lines.size() - 1);
-        this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length() - 1);
+        this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length());
 
-        if (cursorY > offsetY + visibleLines) {
+        if (cursorY > offsetY + visibleLines - 1) {
             offsetY++;
         }
 

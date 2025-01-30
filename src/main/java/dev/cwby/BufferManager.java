@@ -28,7 +28,7 @@ public class BufferManager {
     public static TextBuffer openFileBuffer(File file) {
         if (file.exists()) {
             System.out.println(file.getAbsolutePath());
-            TextBuffer textBuffer = new TextBuffer(new FileChunkLoader(file, 10240));
+            TextBuffer textBuffer = new TextBuffer(new FileChunkLoader(file, 64 * 1024));
             buffers.add(textBuffer);
             return textBuffer;
         }

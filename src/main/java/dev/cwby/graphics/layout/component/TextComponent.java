@@ -113,11 +113,15 @@ public class TextComponent implements IComponent {
         }
     }
 
+    private final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(5);
+
     @Override
     public void render(Canvas canvas, float x, float y, float width, float height) {
         canvas.save();
-        canvas.clipRect(Rect.makeXYWH(x, y, x + width, y + height));
+        Rect rect = Rect.makeXYWH(x, y, x + width, y + height);
+        canvas.clipRect(rect);
         canvas.clear(ConfigurationParser.hexToInt(Deditor.getConfig().theme.background));
+        canvas.drawRect(rect, borderPaint);
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);
             if (SkiaRenderer.currentNode.component == this) {

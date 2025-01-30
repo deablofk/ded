@@ -18,7 +18,7 @@ public class SkiaRenderer implements IRender {
 
     private final Paint textPaint;
 
-    public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720);
+    public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720 - FontManager.getLineHeight());
     public static RegionNode currentNode = rootNode;
 
     public SkiaRenderer() {
@@ -41,13 +41,12 @@ public class SkiaRenderer implements IRender {
             surface.close();
             canvas.close();
         } catch (Exception e) {
-
         }
 
         renderTarget = BackendRenderTarget.makeGL(width, height, 0, 8, fbId, FramebufferFormat.GR_GL_RGBA8);
         surface = Surface.wrapBackendRenderTarget(context, renderTarget, SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.getSRGB());
         canvas = surface.getCanvas();
-        rootNode.updateSize(0, 0, width, height);
+        rootNode.updateSize(0, 0, width, height - FontManager.getLineHeight());
     }
 
 
@@ -67,7 +66,7 @@ public class SkiaRenderer implements IRender {
     @Override
     public void render(int width, int height) {
         renderRegion(canvas, rootNode);
-//        renderStatusLine(0, height - FontManager.getLineHeight(), width, height);
+        renderStatusLine(0, height - FontManager.getLineHeight(), width, height);
         context.flush();
         surface.flushAndSubmit();
     }
