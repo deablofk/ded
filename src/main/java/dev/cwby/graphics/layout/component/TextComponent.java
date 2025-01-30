@@ -9,11 +9,13 @@ import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Font;
+import io.github.humbleui.skija.FontMetrics;
 import io.github.humbleui.skija.Paint;
 import io.github.humbleui.types.Rect;
 import io.github.treesitter.jtreesitter.Node;
 
 import java.util.Map;
+
 
 public class TextComponent implements IComponent {
 
@@ -38,14 +40,18 @@ public class TextComponent implements IComponent {
         float offsetX = x;
         var currentText = new StringBuilder();
         Paint currentPaint = null;
+        Font font = FontManager.getDefaultFont();
+        FontMetrics metrics = font.getMetrics();
+        float baselineOffset = -metrics.getAscent();
+        float textY = y + baselineOffset;
+
         for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
             Paint paint = styles.getOrDefault(i, textPaint);
 
             if (currentPaint == null || !currentPaint.equals(paint)) {
                 if (!currentText.isEmpty()) {
-                    Font font = SkiaRenderer.fontManager.resolveFontForGlyph(codePoint);
-                    canvas.drawString(currentText.toString(), offsetX, y, font, currentPaint);
+                    canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
                     offsetX += font.measureTextWidth(currentText.toString());
                     currentText.setLength(0);
                 }
@@ -56,28 +62,21 @@ public class TextComponent implements IComponent {
             i += Character.charCount(codePoint);
         }
         if (!currentText.isEmpty()) {
-            Font font = SkiaRenderer.fontManager.resolveFontForGlyph(currentText.codePointAt(0));
-            canvas.drawString(currentText.toString(), offsetX, y, font, currentPaint);
+            canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
         }
     }
 
     public void renderText(Canvas canvas, float x, float y, float width, float height, int offsetY) {
-        Font font = SkiaRenderer.fontManager.getDefaultFont();
-        float lineHeight = SkiaRenderer.fontManager.getLineHeight();
-        int startLine = (int) Math.max(0, offsetY / lineHeight);
-        int endLine = (int) Math.min(buffer.lines.size(), (double) (offsetY + height) / lineHeight);
-        for (int i = startLine; i < endLine; i++) {
+        float lineHeight = FontManager.getLineHeight();
+        for (int i = offsetY, count = 0; i < buffer.lines.size(); i++, count++) {
             StringBuilder line = buffer.lines.get(i);
             Node root = SyntaxHighlighter.parse(line.toString());
             Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
-//            String number = i + "~ ";
-//            float numberWidth = font.measureTextWidth(number);
-//            canvas.drawString(number, x, (y + lineHeight) + i * lineHeight, font, numberPaint);
-            drawHighlightedText(canvas, line.toString(), x, (y + lineHeight) + i * lineHeight, width, height, styles);
+            drawHighlightedText(canvas, line.toString(), x, y + count * lineHeight, width, height, styles);
         }
     }
 
-    public void renderCursor(Canvas canvas, float bufferX, float bufferY, FontManager fontManager) {
+    public void renderCursor(Canvas canvas, float bufferX, float bufferY) {
         long now = System.currentTimeMillis();
 
         if (now - lastBlinkTime >= Deditor.getConfig().cursor.blink) {
@@ -86,31 +85,28 @@ public class TextComponent implements IComponent {
         }
 
         TextComponent textComponent = (TextComponent) SkiaRenderer.currentNode.component;
-        if (textComponent != null && textComponent.getBuffer() != null) {
-            TextBuffer buffer = textComponent.getBuffer();
-            int cursorX = buffer.cursorX;
-            int cursorY = buffer.cursorY;
+        TextBuffer buffer = textComponent.getBuffer();
+        int cursorX = buffer.cursorX;
+        int cursorY = buffer.cursorY;
 
-            if (cursorVisible && (cursorY < buffer.lines.size())) {
-                float x = 0;
-                if (cursorY >= 0) {
-                    StringBuilder line = buffer.lines.get(cursorY);
-                    for (int i = 0; i < cursorX && i < line.length(); ) {
-                        int codePoint = line.codePointAt(i);
-                        Font font = fontManager.resolveFontForGlyph(codePoint);
-                        String glyph = new String(Character.toChars(codePoint));
-                        x += font.measureTextWidth(glyph);
-                        i += Character.charCount(codePoint);
-                    }
+        if (cursorVisible && (cursorY < buffer.lines.size())) {
+            float x = 0;
+            if (cursorY >= 0) {
+                StringBuilder line = buffer.lines.get(cursorY);
+                for (int i = 0; i < cursorX && i < line.length(); ) {
+                    int codePoint = line.codePointAt(i);
+                    Font font = FontManager.getDefaultFont();
+                    String glyph = new String(Character.toChars(codePoint));
+                    x += font.measureTextWidth(glyph);
+                    i += Character.charCount(codePoint);
                 }
+            }
 
-
-                float y = cursorY * fontManager.getLineHeight();
-                if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION) {
-                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, fontManager.getAvgWidth(), fontManager.getLineHeight()), cursorColor);
-                } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
-                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, 2, fontManager.getLineHeight()), cursorColor);
-                }
+            float y = cursorY * FontManager.getLineHeight();
+            if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION) {
+                canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, FontManager.getAvgWidth(), FontManager.getLineHeight()), cursorColor);
+            } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
+                canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, 2, FontManager.getLineHeight()), cursorColor);
             }
         }
     }
@@ -123,7 +119,7 @@ public class TextComponent implements IComponent {
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);
             if (SkiaRenderer.currentNode.component == this) {
-                renderCursor(canvas, x, y, SkiaRenderer.fontManager);
+                renderCursor(canvas, x, y);
             }
         }
         canvas.restore();

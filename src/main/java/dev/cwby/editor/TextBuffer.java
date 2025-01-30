@@ -1,5 +1,8 @@
 package dev.cwby.editor;
 
+import dev.cwby.graphics.Engine;
+import dev.cwby.graphics.FontManager;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,8 +94,21 @@ public class TextBuffer {
     }
 
     public void moveCursor(int x, int y) {
+        int visibleLines = (int) (Engine.getHeight() / FontManager.getLineHeight());
         this.cursorY = Math.min(Math.max(0, y), this.lines.size() - 1);
         this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length() - 1);
+
+        // Scroll down if cursor reaches the last visible line
+        if (cursorY >= offsetY + visibleLines - 1) {
+            offsetY++;
+        }
+
+        // Scroll up if cursor moves above the visible buffer
+        if (cursorY < offsetY) {
+            offsetY = cursorY;
+        }
+
+        System.out.println(cursorY);
     }
 
 }

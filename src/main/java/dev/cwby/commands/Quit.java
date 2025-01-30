@@ -6,7 +6,7 @@ public class Quit implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        Engine.shouldClose = true;
+        Engine.setShouldClose(true);
         return true;
     }
 }

@@ -7,6 +7,7 @@ import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.layout.RegionNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
+import io.github.humbleui.types.Rect;
 import org.lwjgl.opengl.GL11;
 
 public class SkiaRenderer implements IRender {
@@ -16,13 +17,13 @@ public class SkiaRenderer implements IRender {
     private Canvas canvas;
 
     private final Paint textPaint;
-    public static final FontManager fontManager = new FontManager();
 
-    public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720);
+    public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720 - FontManager.getLineHeight());
     public static RegionNode currentNode = rootNode;
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
+
         textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
         rootNode.component = new TextComponent();
         onResize(1280, 720);
@@ -32,45 +33,41 @@ public class SkiaRenderer implements IRender {
         }
     }
 
-    public void drawStringWithFontFallback(String text, float x, float y, Paint paint) {
-        float offsetX = x;
-        for (int i = 0; i < text.length(); ) {
-            int codePoint = text.codePointAt(i);
-            Font font = fontManager.resolveFontForGlyph(codePoint);
-
-            String glyph = new String(Character.toChars(codePoint));
-            canvas.drawString(glyph, offsetX, y, font, paint);
-
-            offsetX += font.measureTextWidth(glyph);
-            i += Character.charCount(codePoint);
-        }
-    }
-
-
     @Override
     public void onResize(int width, int height) {
         int fbId = GL11.glGetInteger(0x8CA6);
+
+        try {
+            surface.close();
+            canvas.close();
+        } catch (Exception e) {
+
+        }
+
         renderTarget = BackendRenderTarget.makeGL(width, height, 0, 8, fbId, FramebufferFormat.GR_GL_RGBA8);
         surface = Surface.wrapBackendRenderTarget(context, renderTarget, SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.getSRGB());
         canvas = surface.getCanvas();
-        rootNode.updateSize(0, 0, width, height);
+        rootNode.updateSize(0, 0, width, height - FontManager.getLineHeight());
     }
 
 
-    public void renderStatusLine(float posY, float drawDuration) {
+    public void renderStatusLine(float x, float y, float width, float height) {
+        canvas.save();
+        canvas.clipRect(Rect.makeXYWH(x, y, x + width, y + height));
+        canvas.clear(0xFF000000);
         if (Deditor.getBufferMode() == TextInteractionMode.COMMAND) {
-            drawStringWithFontFallback(":" + CommandHandler.getBuffer(), 0, posY, textPaint);
-//            canvas.drawString(":" + CommandHandler.getBuffer(), 0, posY, fontManager.getDefaultFont(), textPaint);
+            canvas.drawString(":" + CommandHandler.getBuffer(), 5, y + FontManager.getLineHeight() - 5, FontManager.getDefaultFont(), textPaint);
         } else {
-            drawStringWithFontFallback(Deditor.getBufferMode() + "|" + CommandHandler.getBuffer(), 0, posY, textPaint);
+            canvas.drawString(Deditor.getBufferMode().toString(), 5, y + FontManager.getLineHeight() - 5, FontManager.getDefaultFont(), textPaint);
         }
+        canvas.restore();
     }
 
 
     @Override
     public void render(int width, int height) {
         renderRegion(canvas, rootNode);
-        renderStatusLine(height - fontManager.getLineHeight(), 0);
+        renderStatusLine(0, height - FontManager.getLineHeight(), width, height);
         context.flush();
         surface.flushAndSubmit();
     }

@@ -14,11 +14,23 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Engine {
 
-    public static long window;
-    public static int width = 1280;
-    public static int height = 720;
+    private static long window;
+    private static int width = 1280;
+    private static int height = 720;
     private final IKeyHandler keyHandler = new GlobalKeyHandler();
-    public static boolean shouldClose = false;
+    private static boolean shouldClose;
+
+    public static int getWidth() {
+        return width;
+    }
+
+    public static int getHeight() {
+        return height;
+    }
+
+    public static void setShouldClose(boolean shouldClose) {
+        Engine.shouldClose = shouldClose;
+    }
 
     public void initSDL() {
         if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -49,8 +61,8 @@ public class Engine {
                         break;
                     case SDLEvents.SDL_EVENT_WINDOW_RESIZED:
                         var display = event.display();
-                        var width = display.data1();
-                        var height = display.data2();
+                        width = display.data1();
+                        height = display.data2();
                         renderer.onResize(width, height);
                         break;
                 }
