@@ -2,13 +2,14 @@ package dev.cwby.graphics;
 
 import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.input.IKeyHandler;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.sdl.SDLEvents;
+import org.lwjgl.sdl.SDL_Event;
 
-import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
+import static org.lwjgl.sdl.SDLInit.*;
+import static org.lwjgl.sdl.SDLVideo.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Engine {
@@ -16,86 +17,51 @@ public class Engine {
     public static long window;
     public static int width = 1280;
     public static int height = 720;
-    private GLFWFramebufferSizeCallback resizeCallback;
-    private IKeyHandler keyHandler = new GlobalKeyHandler();
-    private IRender renderer;
+    private final IKeyHandler keyHandler = new GlobalKeyHandler();
+    public static boolean shouldClose = false;
 
-    public void initGLFW() {
-        GLFWErrorCallback.createPrint(System.err).set();
-        if (!glfwInit()) {
+    public void initSDL() {
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
 
-        window = glfwCreateWindow(width, height, "Hello World!", NULL, NULL);
+        window = SDL_CreateWindow("Hello World!", width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE);
         if (window == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
         }
 
-        if (keyHandler != null) {
-            glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> keyHandler.handleKey(key, scancode, action, mods));
-            glfwSetCharCallback(window, (windowHandle, codepoint) -> keyHandler.handleChar(codepoint));
-        }
-
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(GLFW_TRUE);
+        SDL_GL_CreateContext(window);
+        SDL_GL_MakeCurrent(window, SDL_GL_GetCurrentContext());
+        SDL_GL_SetSwapInterval(1);
         GL.createCapabilities();
-    }
 
-    public void destroyGLFW() {
-        glfwFreeCallbacks(window);
-        glfwDestroyWindow(window);
-        glfwTerminate();
-        GLFWErrorCallback errorCallback = glfwSetErrorCallback(null);
-        if (errorCallback != null) {
-            errorCallback.free();
-            errorCallback.close();
-        }
-    }
-
-    public void loop() {
-        if (renderer == null) {
-            throw new RuntimeException("Renderer cant be null");
-        }
-        final double targetFPS = 100.0;
-        final double targetFrameTime = 1.0 / targetFPS;
-        while (!glfwWindowShouldClose(window)) {
-            double frameStartTime = glfwGetTime();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            renderer.render(width, height);
-
-            glfwSwapBuffers(window);
-            glfwWaitEventsTimeout(targetFrameTime);
-            double frameEndTime = glfwGetTime();
-            double elapsedTime = frameEndTime - frameStartTime;
-
-            if (elapsedTime < targetFrameTime) {
-                try {
-                    Thread.sleep((long) ((targetFrameTime - elapsedTime) * 1000));
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+        IRender renderer = new SkiaRenderer();
+        SDL_Event event = SDL_Event.create();
+        while (!shouldClose) {
+            // handle events
+            while (SDL_PollEvent(event)) {
+                switch (event.type()) {
+                    case SDLEvents.SDL_EVENT_QUIT:
+                        shouldClose = true;
+                        break;
+                    case SDLEvents.SDL_EVENT_KEY_DOWN:
+                        keyHandler.handle(event);
+                        break;
+                    case SDLEvents.SDL_EVENT_WINDOW_RESIZED:
+                        var display = event.display();
+                        var width = display.data1();
+                        var height = display.data2();
+                        renderer.onResize(width, height);
+                        break;
                 }
             }
+
+            // render
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            renderer.render(width, height);
+
+            SDL_GL_SwapWindow(window);
         }
-    }
-
-    public void setKeyHandler(IKeyHandler keyHandler) {
-        this.keyHandler = keyHandler;
-    }
-
-    public void setRenderer(IRender renderer) {
-        this.renderer = renderer;
-        if (renderer != null) {
-            if (resizeCallback != null) {
-                resizeCallback.free();
-                resizeCallback.close();
-            }
-            resizeCallback = glfwSetFramebufferSizeCallback(window, (_, width, height) -> {
-                renderer.onResize(width, height);
-                this.width = width;
-                this.height = height;
-            });
-
-        }
+        SDL_Quit();
     }
 }

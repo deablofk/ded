@@ -4,7 +4,6 @@ import dev.cwby.BufferManager;
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextInteractionMode;
-import dev.cwby.graphics.editor.CursorRender;
 import dev.cwby.graphics.layout.RegionNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
@@ -18,15 +17,13 @@ public class SkiaRenderer implements IRender {
 
     private final Paint textPaint;
     public static final FontManager fontManager = new FontManager();
-//    private CursorRender cursorRender;
 
     public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720);
     public static RegionNode currentNode = rootNode;
 
     public SkiaRenderer() {
-//        cursorRender = new CursorRender(canvas, fontManager);
         context = DirectContext.makeGL();
-        textPaint = new Paint().setColor(Deditor.config.treesitter.get("default"));
+        textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
         rootNode.component = new TextComponent();
         onResize(1280, 720);
         if (BufferManager.shouldOpenEmptyBuffer) {
@@ -56,7 +53,6 @@ public class SkiaRenderer implements IRender {
         renderTarget = BackendRenderTarget.makeGL(width, height, 0, 8, fbId, FramebufferFormat.GR_GL_RGBA8);
         surface = Surface.wrapBackendRenderTarget(context, renderTarget, SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.getSRGB());
         canvas = surface.getCanvas();
-//        cursorRender.updateCanvas(canvas);
         rootNode.updateSize(0, 0, width, height);
     }
 
@@ -64,8 +60,9 @@ public class SkiaRenderer implements IRender {
     public void renderStatusLine(float posY, float drawDuration) {
         if (Deditor.getBufferMode() == TextInteractionMode.COMMAND) {
             drawStringWithFontFallback(":" + CommandHandler.getBuffer(), 0, posY, textPaint);
+//            canvas.drawString(":" + CommandHandler.getBuffer(), 0, posY, fontManager.getDefaultFont(), textPaint);
         } else {
-            drawStringWithFontFallback(Deditor.getBufferMode() + " | drawDuration(" + drawDuration + "ms)", 0, posY, textPaint);
+            drawStringWithFontFallback(Deditor.getBufferMode() + "|" + CommandHandler.getBuffer(), 0, posY, textPaint);
         }
     }
 
@@ -73,7 +70,6 @@ public class SkiaRenderer implements IRender {
     @Override
     public void render(int width, int height) {
         renderRegion(canvas, rootNode);
-//        cursorRender.render();
         renderStatusLine(height - fontManager.getLineHeight(), 0);
         context.flush();
         surface.flushAndSubmit();

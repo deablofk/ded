@@ -24,7 +24,7 @@ public class FontManager {
     private final float avgWidth;
 
     public FontManager() {
-        cfg = Deditor.config.font;
+        cfg = Deditor.getConfig().font;
         fallbackTypefaces = getSystemFonts();
         fontCache = new HashMap<>();
         defaultFont = new Font(Typeface.makeFromName(cfg.family, FontStyle.NORMAL), cfg.size);

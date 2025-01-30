@@ -9,7 +9,7 @@ import java.util.List;
 
 public class BufferManager {
     public static List<TextBuffer> buffers = new ArrayList<>();
-    public static boolean shouldOpenEmptyBuffer = false;
+    public static boolean shouldOpenEmptyBuffer = true;
 
     public static TextBuffer getBuffer(int id) {
         return buffers.get(id);

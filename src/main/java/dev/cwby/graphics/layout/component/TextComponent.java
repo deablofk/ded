@@ -17,9 +17,9 @@ import java.util.Map;
 
 public class TextComponent implements IComponent {
 
-    private static final Paint textPaint = new Paint().setColor(Deditor.config.treesitter.get("default"));
-    private static final Paint numberPaint = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.theme.numberColor));
-    private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.cursor.color));
+    private static final Paint textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
+    private static final Paint numberPaint = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().theme.numberColor));
+    private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color));
 
     private TextBuffer buffer;
     private boolean cursorVisible = true;
@@ -80,7 +80,7 @@ public class TextComponent implements IComponent {
     public void renderCursor(Canvas canvas, float bufferX, float bufferY, FontManager fontManager) {
         long now = System.currentTimeMillis();
 
-        if (now - lastBlinkTime >= Deditor.config.cursor.blink) {
+        if (now - lastBlinkTime >= Deditor.getConfig().cursor.blink) {
             cursorVisible = !cursorVisible;
             lastBlinkTime = now;
         }
@@ -119,7 +119,7 @@ public class TextComponent implements IComponent {
     public void render(Canvas canvas, float x, float y, float width, float height) {
         canvas.save();
         canvas.clipRect(Rect.makeXYWH(x, y, x + width, y + height));
-        canvas.clear(ConfigurationParser.hexToInt(Deditor.config.theme.background));
+        canvas.clear(ConfigurationParser.hexToInt(Deditor.getConfig().theme.background));
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);
             if (SkiaRenderer.currentNode.component == this) {
