@@ -39,7 +39,7 @@ public class FileChunkLoader {
         return chunk;
     }
 
-    public List<StringBuilder> loadChunckByByteOffset() {
+    public List<StringBuilder> loadChunkByByteSize() {
         List<StringBuilder> chunk = new ArrayList<>();
         try {
             RandomAccessFile raf = new RandomAccessFile(file, "r");
@@ -79,5 +79,9 @@ public class FileChunkLoader {
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             return currentOffset < raf.length();
         }
+    }
+
+    public File getFile() {
+        return file;
     }
 }

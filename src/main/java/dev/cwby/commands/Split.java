@@ -5,12 +5,12 @@ import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.RegionNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 
-public class VerticalSplit implements ICommand {
+public class Split implements ICommand {
 
     @Override
     public boolean run(String[] args) {
         RegionNode currentNode = SkiaRenderer.currentNode;
-        currentNode.splitVertically();
+        currentNode.splitHorizontally();
         if (currentNode.component != null) {
             currentNode.leftChild.component = currentNode.component;
             currentNode.rightChild.component = currentNode.component;

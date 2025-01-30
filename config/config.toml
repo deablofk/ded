@@ -3,11 +3,12 @@ blink = 500 # cursor blink interval
 color = "#77FFFFFF"
 
 [font]
-family = "Iosevka Nerd Font"
+family = "JetBrains Mono"
 size = 20
 
 [theme]
 background = "#FF1B1B1B"
+numberColor = "#FF666666"
 
 [treesitter]
 # program

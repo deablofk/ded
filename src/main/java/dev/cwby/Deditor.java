@@ -35,12 +35,10 @@ public class Deditor {
     }
 
     public static void main(String[] args) {
-        Deditor deditor = new Deditor();
         if (args.length == 0) {
-            BufferManager.addEmptyBuffer();
-        } else {
-            CommandHandler.executeCommand("vs " + args[1]);
+            BufferManager.shouldOpenEmptyBuffer = true;
         }
+        Deditor deditor = new Deditor();
         deditor.start();
     }
 }

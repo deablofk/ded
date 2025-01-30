@@ -3,6 +3,8 @@ package dev.cwby.graphics.layout.component;
 import dev.cwby.Deditor;
 import dev.cwby.config.ConfigurationParser;
 import dev.cwby.editor.TextBuffer;
+import dev.cwby.editor.TextInteractionMode;
+import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.Canvas;
@@ -16,12 +18,20 @@ import java.util.Map;
 public class TextComponent implements IComponent {
 
     private static final Paint textPaint = new Paint().setColor(Deditor.config.treesitter.get("default"));
+    private static final Paint numberPaint = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.theme.numberColor));
+    private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.config.cursor.color));
 
     private TextBuffer buffer;
+    private boolean cursorVisible = true;
+    private long lastBlinkTime = 0;
 
     public TextComponent setBuffer(TextBuffer buffer) {
         this.buffer = buffer;
         return this;
+    }
+
+    public TextBuffer getBuffer() {
+        return buffer;
     }
 
     private void drawHighlightedText(Canvas canvas, String text, float x, float y, float width, float height, Map<Integer, Paint> styles) {
@@ -51,27 +61,70 @@ public class TextComponent implements IComponent {
         }
     }
 
-    public void renderText(Canvas canvas, float x, float y, float width, float viewportHeight, int offsetY) {
-        int startLine = (int) Math.max(0, offsetY / SkiaRenderer.fontManager.getLineHeight());
-        int endLine = (int) Math.min(buffer.lines.size(), (double) (offsetY + viewportHeight) / SkiaRenderer.fontManager.getLineHeight());
+    public void renderText(Canvas canvas, float x, float y, float width, float height, int offsetY) {
+        Font font = SkiaRenderer.fontManager.getDefaultFont();
+        float lineHeight = SkiaRenderer.fontManager.getLineHeight();
+        int startLine = (int) Math.max(0, offsetY / lineHeight);
+        int endLine = (int) Math.min(buffer.lines.size(), (double) (offsetY + height) / lineHeight);
         for (int i = startLine; i < endLine; i++) {
             StringBuilder line = buffer.lines.get(i);
             Node root = SyntaxHighlighter.parse(line.toString());
             Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
-            drawHighlightedText(canvas, line.toString(), x, 24 + i * SkiaRenderer.fontManager.getLineHeight(), width, viewportHeight, styles);
+//            String number = i + "~ ";
+//            float numberWidth = font.measureTextWidth(number);
+//            canvas.drawString(number, x, (y + lineHeight) + i * lineHeight, font, numberPaint);
+            drawHighlightedText(canvas, line.toString(), x, (y + lineHeight) + i * lineHeight, width, height, styles);
+        }
+    }
+
+    public void renderCursor(Canvas canvas, float bufferX, float bufferY, FontManager fontManager) {
+        long now = System.currentTimeMillis();
+
+        if (now - lastBlinkTime >= Deditor.config.cursor.blink) {
+            cursorVisible = !cursorVisible;
+            lastBlinkTime = now;
+        }
+
+        TextComponent textComponent = (TextComponent) SkiaRenderer.currentNode.component;
+        if (textComponent != null && textComponent.getBuffer() != null) {
+            TextBuffer buffer = textComponent.getBuffer();
+            int cursorX = buffer.cursorX;
+            int cursorY = buffer.cursorY;
+
+            if (cursorVisible && (cursorY < buffer.lines.size())) {
+                float x = 0;
+                if (cursorY >= 0) {
+                    StringBuilder line = buffer.lines.get(cursorY);
+                    for (int i = 0; i < cursorX && i < line.length(); ) {
+                        int codePoint = line.codePointAt(i);
+                        Font font = fontManager.resolveFontForGlyph(codePoint);
+                        String glyph = new String(Character.toChars(codePoint));
+                        x += font.measureTextWidth(glyph);
+                        i += Character.charCount(codePoint);
+                    }
+                }
+
+
+                float y = cursorY * fontManager.getLineHeight();
+                if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION) {
+                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, fontManager.getAvgWidth(), fontManager.getLineHeight()), cursorColor);
+                } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
+                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, 2, fontManager.getLineHeight()), cursorColor);
+                }
+            }
         }
     }
 
     @Override
     public void render(Canvas canvas, float x, float y, float width, float height) {
-//        canvas.clear(ConfigurationParser.hexToInt(Deditor.config.theme.background));
-        if (SkiaRenderer.currentNode != null && SkiaRenderer.currentNode.component == this) {
-            canvas.clear(ConfigurationParser.hexToInt(Deditor.config.theme.background));
-        }
         canvas.save();
         canvas.clipRect(Rect.makeXYWH(x, y, x + width, y + height));
+        canvas.clear(ConfigurationParser.hexToInt(Deditor.config.theme.background));
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);
+            if (SkiaRenderer.currentNode.component == this) {
+                renderCursor(canvas, x, y, SkiaRenderer.fontManager);
+            }
         }
         canvas.restore();
     }

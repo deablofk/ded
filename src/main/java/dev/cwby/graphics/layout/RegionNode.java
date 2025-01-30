@@ -1,11 +1,13 @@
 package dev.cwby.graphics.layout;
 
 import dev.cwby.graphics.layout.component.IComponent;
+import dev.cwby.graphics.layout.component.SplitType;
 
 public class RegionNode {
     public float x, y, width, height;
     public IComponent component;
     public RegionNode leftChild, rightChild;
+    public SplitType splitType = SplitType.NONE;
 
     public RegionNode(float x, float y, float width, float height) {
         this.x = x;
@@ -33,6 +35,8 @@ public class RegionNode {
 
         leftChild = new RegionNode(x, y, leftWidth, height);
         rightChild = new RegionNode(x + leftWidth, y, width - leftWidth, height);
+        splitType = SplitType.VERTICAL;
+        updateSize(x, y, width, height);
     }
 
     public void splitHorizontally(float topHeight) {
@@ -42,6 +46,8 @@ public class RegionNode {
 
         leftChild = new RegionNode(x, y, width, topHeight);
         rightChild = new RegionNode(x, y + topHeight, width, height - topHeight);
+        splitType = SplitType.HORIZONTAL;
+        updateSize(x, y, width, height);
     }
 
     public void updateSize(float newX, float newY, float newWidth, float newHeight) {
@@ -52,8 +58,14 @@ public class RegionNode {
 
         if (!isLeaf()) {
             float halfWidth = width / 2.0f;
-            leftChild.updateSize(x, y, halfWidth, height);
-            rightChild.updateSize(x + halfWidth, y, halfWidth, height);
+            float halfHeight = height / 2.0f;
+            if (splitType == SplitType.VERTICAL) {
+                leftChild.updateSize(x, y, halfWidth, height);
+                rightChild.updateSize(x + halfWidth, y, halfWidth, height);
+            } else if (splitType == SplitType.HORIZONTAL) {
+                leftChild.updateSize(x, y, width, halfHeight);
+                rightChild.updateSize(x, y + halfHeight, width, halfHeight);
+            }
         }
     }
 }

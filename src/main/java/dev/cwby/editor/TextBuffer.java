@@ -3,7 +3,6 @@ package dev.cwby.editor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TextBuffer {
     public List<StringBuilder> lines = new ArrayList<>();
@@ -11,10 +10,8 @@ public class TextBuffer {
     public int cursorY = 0;
     public int offsetX = 0;
     public int offsetY = 0;
-    public File file;
     public FileChunkLoader fileChunkLoader;
-    public List<String> currentChunk;
-    public int bufferId = 0;
+    public File file;
 
     public TextBuffer() {
         this.lines.add(new StringBuilder());
@@ -23,18 +20,15 @@ public class TextBuffer {
     public TextBuffer(FileChunkLoader loader) {
         fileChunkLoader = loader;
         loadInitialChunk();
+        this.file = loader.getFile();
     }
 
     private void loadInitialChunk() {
-        lines = fileChunkLoader.loadChunckByByteOffset().stream().map(StringBuilder::new).collect(Collectors.toList());
+        lines.addAll(fileChunkLoader.loadChunkByByteSize());
     }
 
     public StringBuilder getCurrentLine() {
         return this.lines.get(this.cursorY);
-    }
-
-    public void appendText(String text) {
-        getCurrentLine().append(text);
     }
 
     public void appendChar(char c) {
@@ -45,6 +39,11 @@ public class TextBuffer {
     public void insertCharAtCursor(char c) {
         StringBuilder builder = getCurrentLine();
         builder.insert(this.cursorX++, c);
+    }
+
+    public void insertTextAtCursor(String text) {
+        StringBuilder builder = getCurrentLine();
+        builder.insert(this.cursorX, text);
     }
 
     public void removeChar() {
@@ -96,15 +95,4 @@ public class TextBuffer {
         this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length() - 1);
     }
 
-    public String getSource() {
-        StringBuilder allLines = new StringBuilder();
-        for (StringBuilder line : lines) {
-            allLines.append(line).append("\n");
-        }
-        return allLines.toString();
-    }
-
-    public List<String> getLines() {
-        return lines.stream().map(String::new).toList();
-    }
 }

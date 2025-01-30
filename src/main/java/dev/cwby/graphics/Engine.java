@@ -1,6 +1,6 @@
 package dev.cwby.graphics;
 
-import dev.cwby.graphics.layout.RegionNode;
+import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.input.IKeyHandler;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
@@ -13,11 +13,11 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Engine {
 
-    public long window;
-    private int width = 1280;
-    private int height = 720;
+    public static long window;
+    public static int width = 1280;
+    public static int height = 720;
     private GLFWFramebufferSizeCallback resizeCallback;
-    private IKeyHandler keyHandler;
+    private IKeyHandler keyHandler = new GlobalKeyHandler();
     private IRender renderer;
 
     public void initGLFW() {
@@ -32,7 +32,7 @@ public class Engine {
         }
 
         if (keyHandler != null) {
-            glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> keyHandler.handleKey(key, action, mods));
+            glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> keyHandler.handleKey(key, scancode, action, mods));
             glfwSetCharCallback(window, (windowHandle, codepoint) -> keyHandler.handleChar(codepoint));
         }
 

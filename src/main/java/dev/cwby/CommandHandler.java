@@ -21,6 +21,7 @@ public class CommandHandler {
         COMMANDS.put("q", quit);
         COMMANDS.put("e", edit);
         COMMANDS.put("vs", new VerticalSplit());
+        COMMANDS.put("s", new Split());
     }
 
     public static void setCommand(String command, ICommand mode) {
