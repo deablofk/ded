@@ -94,21 +94,17 @@ public class TextBuffer {
     }
 
     public void moveCursor(int x, int y) {
-        int visibleLines = (int) (Engine.getHeight() / FontManager.getLineHeight());
+        int visibleLines = (int) ((Engine.getHeight() - FontManager.getLineHeight()) / FontManager.getLineHeight());
         this.cursorY = Math.min(Math.max(0, y), this.lines.size() - 1);
         this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length() - 1);
 
-        // Scroll down if cursor reaches the last visible line
-        if (cursorY >= offsetY + visibleLines - 1) {
+        if (cursorY > offsetY + visibleLines) {
             offsetY++;
         }
 
-        // Scroll up if cursor moves above the visible buffer
         if (cursorY < offsetY) {
             offsetY = cursorY;
         }
-
-        System.out.println(cursorY);
     }
 
 }
