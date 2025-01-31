@@ -2,14 +2,14 @@ package dev.cwby.commands;
 
 import dev.cwby.BufferManager;
 import dev.cwby.graphics.SkiaRenderer;
-import dev.cwby.graphics.layout.RegionNode;
+import dev.cwby.graphics.layout.WindowNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 
 public class Split implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        RegionNode currentNode = SkiaRenderer.currentNode;
+        WindowNode currentNode = SkiaRenderer.currentNode;
         currentNode.splitHorizontally();
         if (currentNode.component != null) {
             currentNode.leftChild.component = currentNode.component;

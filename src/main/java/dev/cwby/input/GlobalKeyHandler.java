@@ -7,7 +7,7 @@ import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
-import dev.cwby.graphics.layout.RegionNode;
+import dev.cwby.graphics.layout.WindowNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLKeyboard;
@@ -118,10 +118,23 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     public void handleNavigation(int keyChar, int keyCode, short mod) {
-        RegionNode node = SkiaRenderer.currentNode;
+        WindowNode node = SkiaRenderer.currentNode;
         TextComponent component = (TextComponent) node.component;
         TextBuffer buffer = component.getBuffer();
         int visibleLines = (int) (node.height / FontManager.getLineHeight());
+        if ((mod & SDL_KMOD_ALT) != 0) {
+            WindowNode newNode = switch (keyCode) {
+                case SDLK_H -> node.moveLeft();
+                case SDLK_L -> node.moveRight();
+                case SDLK_J -> node.moveDown();
+                case SDLK_K -> node.moveUp();
+                default -> null;
+            };
+
+            if (newNode != null) {
+                return;
+            }
+        }
         switch (keyChar) {
             case 'i' -> {
                 startTextInput();

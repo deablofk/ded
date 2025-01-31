@@ -4,7 +4,7 @@ color = "#77FFFFFF"
 
 [font]
 family = "Iosevka Nerd Font Mono"
-size = 24
+size = 16
 
 [theme]
 background = "#FF1B1B1B"

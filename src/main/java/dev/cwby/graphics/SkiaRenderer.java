@@ -4,7 +4,7 @@ import dev.cwby.BufferManager;
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextInteractionMode;
-import dev.cwby.graphics.layout.RegionNode;
+import dev.cwby.graphics.layout.WindowNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
@@ -18,8 +18,8 @@ public class SkiaRenderer implements IRender {
 
     private final Paint textPaint;
 
-    public static RegionNode rootNode = new RegionNode(0, 0, 1280, 720 - FontManager.getLineHeight());
-    public static RegionNode currentNode = rootNode;
+    public static WindowNode rootNode = new WindowNode(0, 0, 1280, 720 - FontManager.getLineHeight(), null);
+    public static WindowNode currentNode = rootNode;
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
@@ -72,7 +72,7 @@ public class SkiaRenderer implements IRender {
     }
 
 
-    public void renderRegion(Canvas canvas, RegionNode node) {
+    public void renderRegion(Canvas canvas, WindowNode node) {
         if (node.isLeaf()) {
             if (node.component != null) {
                 node.component.render(canvas, node.x, node.y, node.width, node.height);
