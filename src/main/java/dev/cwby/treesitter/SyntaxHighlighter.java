@@ -28,6 +28,7 @@ public class SyntaxHighlighter {
         Tree tree = parser.parse(code, InputEncoding.UTF_8).orElse(null);
         Node rootNode = tree.getRootNode();
         parsedCache.put(code, rootNode);
+        parser.close();
         return rootNode;
     }
 
