@@ -77,11 +77,11 @@ public class WindowNode {
                 ", splitType=" + splitType + ", isLeaf=" + isLeaf() + "]");
 
         if (leftChild != null) {
-            leftChild.printTree(prefix + "  L-> ");
+            leftChild.printTree(prefix + (splitType == SplitType.HORIZONTAL ? "  T-> " : " L-> "));
         }
 
         if (rightChild != null) {
-            rightChild.printTree(prefix + "  R-> ");
+            rightChild.printTree(prefix + (splitType == SplitType.HORIZONTAL ? "  D-> " : " R-> "));
         }
     }
 
@@ -90,20 +90,36 @@ public class WindowNode {
         while (node.father != null) {
             WindowNode sibling = (node == node.father.leftChild) ? node.father.rightChild : node.father.leftChild;
             if (sibling != null) {
-                if (direction == 0 && sibling.x + sibling.width == node.x) return findLeaf(sibling, direction); // Left
-                if (direction == 1 && sibling.x == node.x + node.width) return findLeaf(sibling, direction); // Right
-                if (direction == 2 && sibling.y + sibling.height == node.y) return findLeaf(sibling, direction); // Up
-                if (direction == 3 && sibling.y == node.y + node.height) return findLeaf(sibling, direction); // Down
+                if (direction == 0 && sibling.x + sibling.width == node.x) return findLeaf(sibling); // Left
+                if (direction == 1 && sibling.x == node.x + node.width) return findLeaf(sibling); // Right
+                if (direction == 2 && sibling.y + sibling.height == node.y) return findLeaf(sibling); // Up
+                if (direction == 3 && sibling.y == node.y + node.height) return findLeaf(sibling); // Down
             }
             node = node.father;
         }
         return null;
     }
 
-    private WindowNode findLeaf(WindowNode node, int direction) {
+    private WindowNode findLeaf(WindowNode node) {
         while (!node.isLeaf()) {
-            if (direction == 0 || direction == 2) node = node.rightChild;
-            else node = node.leftChild;
+            WindowNode closerChild;
+            WindowNode fartherChild;
+
+            float leftDistance = (float) Math.sqrt(Math.pow(node.leftChild.x - this.x, 2) + Math.pow(node.leftChild.y - this.y, 2));
+            float rightDistance = (float) Math.sqrt(Math.pow(node.rightChild.x - this.x, 2) + Math.pow(node.rightChild.y - this.y, 2));
+
+            if (leftDistance < rightDistance) {
+                closerChild = node.leftChild;
+                fartherChild = node.rightChild;
+            } else {
+                closerChild = node.rightChild;
+                fartherChild = node.leftChild;
+            }
+
+            boolean xAligned = (this.x >= closerChild.x && this.x < closerChild.x + closerChild.width) || (closerChild.x >= this.x && closerChild.x < this.x + this.width);
+            boolean yAligned = (this.y >= closerChild.y && this.y < closerChild.y + closerChild.height) || (closerChild.y >= this.y && closerChild.y < this.y + this.height);
+
+            node = (xAligned || yAligned) ? closerChild : fartherChild;
         }
         return node;
     }
