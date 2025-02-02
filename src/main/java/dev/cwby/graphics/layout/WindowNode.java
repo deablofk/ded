@@ -147,4 +147,47 @@ public class WindowNode {
         if (neighbor != null) SkiaRenderer.currentNode = neighbor;
         return neighbor;
     }
+
+    public void close() {
+        if (this.father == null) {
+            System.out.println("Can't close because the current node is the root.");
+            return;
+        }
+
+        WindowNode sibling = (this == father.leftChild) ? father.rightChild : father.leftChild;
+
+        if (sibling != null) {
+            if (father.father == null) {
+                SkiaRenderer.rootNode = sibling;
+                sibling.father = null;
+                SkiaRenderer.currentNode = findLeaf(sibling);
+            } else {
+                sibling.father = father.father;
+
+                if (father.father.leftChild == father) {
+                    father.father.leftChild = sibling;
+                } else {
+                    father.father.rightChild = sibling;
+                }
+
+                SkiaRenderer.currentNode = findLeaf(sibling);
+            }
+
+            sibling.updateSize(father.x, father.y, father.width, father.height);
+        } else {
+            if (father.father != null) {
+                if (father.father.leftChild == father) {
+                    father.father.leftChild = null;
+                } else {
+                    father.father.rightChild = null;
+                }
+            }
+
+            if (father.father == null) {
+                SkiaRenderer.rootNode = null;
+            }
+
+            SkiaRenderer.currentNode = father.father;
+        }
+    }
 }
