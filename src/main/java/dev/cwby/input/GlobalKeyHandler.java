@@ -52,10 +52,13 @@ public class GlobalKeyHandler implements IKeyHandler {
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
+            float windowX = SkiaRenderer.currentNode.x;
+            float windowY = SkiaRenderer.currentNode.y;
+
             LSPManager.sendDidChangeNotification(buffer);
             List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
             SkiaRenderer.floatingWindow.setSuggestions(suggestions);
-            SkiaRenderer.floatingWindow.show(buffer.cursorX * FontManager.getAvgWidth(), buffer.cursorY * FontManager.getLineHeight());
+            SkiaRenderer.floatingWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));
         }
