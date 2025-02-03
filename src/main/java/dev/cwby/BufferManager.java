@@ -2,23 +2,23 @@ package dev.cwby;
 
 import dev.cwby.editor.FileChunkLoader;
 import dev.cwby.editor.TextBuffer;
+import dev.cwby.lsp.LSPManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BufferManager {
-    public static List<TextBuffer> buffers = new ArrayList<>();
+    public static TextBuffer emptyBuffer = new TextBuffer();
+    public static Map<String, TextBuffer> buffers = new HashMap<>();
     public static boolean shouldOpenEmptyBuffer = true;
 
-    public static TextBuffer getBuffer(int id) {
-        return buffers.get(id);
+    public static TextBuffer getBuffer(String absolutePath) {
+        return buffers.get(absolutePath);
     }
 
     public static TextBuffer addEmptyBuffer() {
-        TextBuffer textBuffer = new TextBuffer();
-        buffers.add(textBuffer);
-        return textBuffer;
+        return new TextBuffer();
     }
 
     public static TextBuffer openFileBuffer(String filePath) {
@@ -27,9 +27,13 @@ public class BufferManager {
 
     public static TextBuffer openFileBuffer(File file) {
         if (file.exists()) {
+            if (buffers.containsKey(file.getAbsolutePath())) {
+                return buffers.get(file.getAbsolutePath());
+            }
             System.out.println(file.getAbsolutePath());
             TextBuffer textBuffer = new TextBuffer(new FileChunkLoader(file, 64 * 1024));
-            buffers.add(textBuffer);
+            LSPManager.initializeServer(file.getAbsolutePath(), textBuffer);
+            buffers.put(file.getAbsolutePath(), textBuffer);
             return textBuffer;
         }
         return addEmptyBuffer();

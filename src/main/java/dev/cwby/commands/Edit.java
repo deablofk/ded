@@ -3,6 +3,7 @@ package dev.cwby.commands;
 import dev.cwby.BufferManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
+import dev.cwby.lsp.LSPManager;
 
 public class Edit implements ICommand {
 

@@ -6,16 +6,16 @@ import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Font;
 import io.github.humbleui.skija.Paint;
 import io.github.humbleui.types.Rect;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class FloatingWindow implements IComponent {
-
     private float x, y, width, height;
     private boolean visible = false;
-    private List<String> suggestions = new ArrayList<>();
+    private List<CompletionItem> suggestions = new ArrayList<>();
     private int selectedIndex = 0;
     private static final Paint bgPaint = new Paint().setColor(0xFF2E2E2E);
     private static final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(3);
@@ -29,7 +29,7 @@ public class FloatingWindow implements IComponent {
         this.height = 0;
     }
 
-    public void setSuggestions(List<String> suggestions) {
+    public void setSuggestions(List<CompletionItem> suggestions) {
         this.suggestions = suggestions;
         this.height = suggestions.size() * FontManager.getLineHeight();
         this.visible = !suggestions.isEmpty();
@@ -51,13 +51,15 @@ public class FloatingWindow implements IComponent {
 
         canvas.save();
         Rect rect = Rect.makeXYWH(x, y, width, height);
+        canvas.clipRect(rect);
         canvas.drawRect(rect, bgPaint);
         canvas.drawRect(rect, borderPaint);
 
         float textY = y + FontManager.getLineHeight();
         for (int i = 0; i < suggestions.size(); i++) {
+            CompletionItem item = suggestions.get(i);
             Paint paint = (i == selectedIndex) ? new Paint().setColor(0xFF00FF00) : textPaint;
-            canvas.drawString(suggestions.get(i), x + 5, textY, font, paint);
+            canvas.drawString(item.getLabel(), x + 5, textY, font, paint);
             textY += FontManager.getLineHeight();
         }
 
@@ -69,7 +71,15 @@ public class FloatingWindow implements IComponent {
         selectedIndex = Math.max(0, Math.min(selectedIndex + delta, suggestions.size() - 1));
     }
 
-    public String getSelectedItem() {
-        return visible && !suggestions.isEmpty() ? suggestions.get(selectedIndex) : null;
+    public CompletionItem select() {
+        if (visible && !suggestions.isEmpty()) {
+            hide();
+            return suggestions.get(selectedIndex);
+        }
+        return null;
+    }
+
+    public boolean isVisible() {
+        return visible;
     }
 }

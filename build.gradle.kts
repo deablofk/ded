@@ -36,6 +36,8 @@ dependencies {
     implementation("io.github.tree-sitter:jtreesitter:0.24.1")
     // https://central.sonatype.com/artifact/com.moandjiezana.toml/toml4j
     implementation("com.moandjiezana.toml:toml4j:0.7.2")
+    // https://central.sonatype.com/artifact/org.eclipse.lsp4j/org.eclipse.lsp4j
+    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
 }
 
 application {

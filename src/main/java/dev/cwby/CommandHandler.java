@@ -40,7 +40,8 @@ public class CommandHandler {
             try {
                 return executor.run(args);
             } catch (Exception e) {
-                System.out.println("Error executing command: " + fullCommand + " -> " + e.getMessage());
+                e.printStackTrace();
+//                System.out.println("Error executing command: " + fullCommand + " -> " + e.getMessage());
                 return false;
             }
         }

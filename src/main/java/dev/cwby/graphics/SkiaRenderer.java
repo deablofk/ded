@@ -22,7 +22,7 @@ public class SkiaRenderer implements IRender {
 
     public static WindowNode rootNode = new WindowNode(0, 0, 1280, 720 - FontManager.getLineHeight(), null);
     public static WindowNode currentNode = rootNode;
-    public static FloatingWindow floatingWindow = new FloatingWindow(0, 0, 200);
+    public static FloatingWindow floatingWindow = new FloatingWindow(0, 0, 400);
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();

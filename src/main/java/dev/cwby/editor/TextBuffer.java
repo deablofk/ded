@@ -1,5 +1,7 @@
 package dev.cwby.editor;
 
+import org.eclipse.lsp4j.Range;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,30 @@ public class TextBuffer {
     public void insertTextAtCursor(String text) {
         StringBuilder builder = getCurrentLine();
         builder.insert(this.cursorX, text);
+    }
+
+    public void replaceTextInRange(Range range, String text) {
+        int startLine = range.getStart().getLine();
+        int startChar = range.getStart().getCharacter();
+        int endLine = range.getEnd().getLine();
+        int endChar = range.getEnd().getCharacter();
+
+        if (startLine == endLine) {
+            StringBuilder line = lines.get(startLine);
+            line.replace(startChar, endChar, text);
+            cursorX = startChar + text.length();
+        } else {
+            StringBuilder firstLine = lines.get(startLine);
+            firstLine.replace(startChar, firstLine.length(), text);
+
+            for (int lineX = startLine + 1; lineX < endLine; lineX++) {
+                lines.set(lineX, new StringBuilder());
+            }
+
+            StringBuilder lastLine = lines.get(endLine);
+            lastLine.replace(0, endChar, "");
+            lastLine.insert(0, text);
+        }
     }
 
     public void removeChar() {
@@ -103,10 +129,27 @@ public class TextBuffer {
         lines.add(cursorY, new StringBuilder());
     }
 
-    public void newLine() {
+    public void smartNewLine() {
+        StringBuilder currentLine = lines.get(cursorY);
+        int indentLevel = 0;
+
+        while (indentLevel < currentLine.length() && Character.isWhitespace(currentLine.charAt(indentLevel))) {
+            indentLevel++;
+        }
+
+        String indentation = currentLine.substring(0, indentLevel);
+
+        if (cursorX > 0 && cursorX <= currentLine.length()) {
+            char lastChar = currentLine.charAt(cursorX - 1);
+
+            if (lastChar == '{' || lastChar == '(' || lastChar == ':') {
+                indentation += "    ";
+            }
+        }
+
+        lines.add(cursorY + 1, new StringBuilder(indentation));
+        cursorX = indentation.length();
         cursorY++;
-        cursorX = 0;
-        lines.add(cursorY, new StringBuilder());
     }
 
     public void deleteCurrentLine() {
@@ -134,4 +177,15 @@ public class TextBuffer {
         }
     }
 
+    public String getSourceCode() {
+        var code = new StringBuilder();
+        for (var line : lines) {
+            code.append(line).append("\n");
+        }
+        return code.toString();
+    }
+
+    public List<StringBuilder> getLines() {
+        return lines;
+    }
 }

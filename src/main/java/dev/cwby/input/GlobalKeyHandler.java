@@ -9,9 +9,14 @@ import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.WindowNode;
 import dev.cwby.graphics.layout.component.TextComponent;
+import dev.cwby.lsp.LSPManager;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLKeyboard;
 import org.lwjgl.sdl.SDL_Event;
+
+import java.util.List;
 
 import static dev.cwby.editor.TextInteractionMode.*;
 import static org.lwjgl.sdl.SDLKeycode.*;
@@ -44,7 +49,13 @@ public class GlobalKeyHandler implements IKeyHandler {
         TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
         TextInteractionMode mode = Deditor.getBufferMode();
         if (mode == INSERT) {
-            buffer.appendChar(event.text().textString().charAt(0));
+            char c = event.text().textString().charAt(0);
+            buffer.appendChar(c);
+
+            LSPManager.sendDidChangeNotification(buffer);
+            List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
+            SkiaRenderer.floatingWindow.setSuggestions(suggestions);
+            SkiaRenderer.floatingWindow.show(buffer.cursorX * FontManager.getAvgWidth(), buffer.cursorY * FontManager.getLineHeight());
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));
         }
@@ -64,9 +75,32 @@ public class GlobalKeyHandler implements IKeyHandler {
             case SDLK_ESCAPE -> {
                 stopTextInput();
                 Deditor.setBufferMode(NAVIGATION);
+                SkiaRenderer.floatingWindow.hide();
             }
-            case SDLK_RETURN -> buffer.newLine();
-            case SDLK_BACKSPACE -> buffer.removeChar();
+            case SDLK_RETURN -> {
+                if (SkiaRenderer.floatingWindow.isVisible()) {
+                    CompletionItem selectedItem = SkiaRenderer.floatingWindow.select();
+                    System.out.println(selectedItem.toString());
+
+                    Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
+                    if (eitherTextEdit.getLeft() != null) {
+                        TextEdit edit = eitherTextEdit.getLeft();
+                        buffer.replaceTextInRange(edit.getRange(), edit.getNewText());
+                        if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
+                            buffer.insertTextAtCursor("()");
+                            buffer.cursorX += 2;
+                        }
+                    } else {
+                        // TODO: insert text at cursor
+                    }
+                } else {
+                    buffer.smartNewLine();
+                }
+            }
+            case SDLK_BACKSPACE -> {
+                buffer.removeChar();
+                SkiaRenderer.floatingWindow.hide();
+            }
             case SDLK_DELETE -> {
                 if ((mod & SDL_KMOD_CTRL) != 0) {
                     System.out.println("removing word");
@@ -114,6 +148,13 @@ public class GlobalKeyHandler implements IKeyHandler {
                     CommandHandler.getBuilderBuffer().deleteCharAt(length);
                 }
             }
+
+            case SDLK_V -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    String clipboard = SDLClipboard.SDL_GetClipboardText();
+                    CommandHandler.getBuilderBuffer().append(clipboard);
+                }
+            }
         }
     }
 
@@ -122,6 +163,8 @@ public class GlobalKeyHandler implements IKeyHandler {
         TextComponent component = (TextComponent) node.component;
         TextBuffer buffer = component.getBuffer();
         int visibleLines = (int) (node.height / FontManager.getLineHeight());
+
+        // movement
         if ((mod & SDL_KMOD_ALT) != 0) {
             WindowNode newNode = switch (keyCode) {
                 case SDLK_H -> node.moveLeft();
@@ -154,9 +197,14 @@ public class GlobalKeyHandler implements IKeyHandler {
             case 'd' -> {
                 if (lastKey == 'd') {
                     buffer.deleteCurrentLine();
-                    lastKey = -1;
-                } else {
-                    lastKey = keyChar;
+                } else if (lastKey == 'g') {
+                    List<Location> definitions = LSPManager.getDefinitions(buffer.file.getAbsolutePath(), buffer.cursorY, buffer.cursorX);
+                    if (definitions.size() == 1) {
+                        Location location = definitions.getFirst();
+                        CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
+                    } else {
+                        // show options in the floating window for selecting the denition
+                    }
                 }
             }
             case ':' -> {
@@ -168,5 +216,7 @@ public class GlobalKeyHandler implements IKeyHandler {
             case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY, visibleLines);
             case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
         }
+
+        lastKey = keyChar;
     }
 }
