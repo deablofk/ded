@@ -93,4 +93,8 @@ public class SkiaRenderer implements IRender {
             floatingWindow.render(canvas, textBuffer.cursorX, textBuffer.cursorY, rootNode.width, rootNode.height);
         }
     }
+
+    public static TextBuffer getCurrentTextBuffer() {
+        return ((TextComponent) currentNode.component).getBuffer();
+    }
 }

@@ -92,24 +92,20 @@ public class TextBuffer {
         }
     }
 
+    // not working correctly for removing next words
     public void removeWordAfterCursor() {
         StringBuilder currentLine = getCurrentLine();
-
-        // Skip any leading whitespace (if cursor is on a space)
         while (cursorX < currentLine.length() && currentLine.charAt(cursorX) == ' ') {
-            currentLine.deleteCharAt(cursorX); // Remove space
+            currentLine.deleteCharAt(cursorX);
         }
 
-        // Now delete the next word until a space, uppercase letter, or non-letter symbol
         while (cursorX < currentLine.length()) {
             char c = currentLine.charAt(cursorX);
 
-            // Stop when a space, uppercase letter, or non-letter symbol is encountered
             if (c == ' ' || Character.isUpperCase(c) || !Character.isLetter(c)) {
                 break;
             }
 
-            // Delete the character and move the cursor
             currentLine.deleteCharAt(cursorX);
         }
     }
@@ -175,6 +171,40 @@ public class TextBuffer {
         if (cursorY < offsetY) {
             offsetY = cursorY;
         }
+    }
+
+    public void moveNextWord() {
+        StringBuilder currentLine = getCurrentLine();
+        int len = currentLine.length();
+
+        while (cursorX < len && Character.isLetterOrDigit(currentLine.charAt(cursorX))) {
+            cursorX++;
+        }
+
+        while (cursorX < len && !Character.isLetterOrDigit(currentLine.charAt(cursorX))) {
+            cursorX++;
+        }
+
+        cursorX = Math.min(cursorX, len);
+    }
+
+    public void movePreviousWord() {
+        StringBuilder currentLine = getCurrentLine();
+
+        while (cursorX > 0 && !Character.isLetterOrDigit(currentLine.charAt(cursorX - 1))) {
+            cursorX--;
+        }
+
+        while (cursorX > 0 && Character.isLetterOrDigit(currentLine.charAt(cursorX - 1))) {
+            cursorX--;
+        }
+
+        cursorX = Math.max(cursorX, 0);
+    }
+
+    public void gotoPosition(int x, int y) {
+        cursorY = Math.min(y, lines.size());
+        cursorX = Math.min(x, getCurrentLine().length());
     }
 
     public String getSourceCode() {

@@ -205,6 +205,9 @@ public class GlobalKeyHandler implements IKeyHandler {
                     if (definitions.size() == 1) {
                         Location location = definitions.getFirst();
                         CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
+                        int x = location.getRange().getStart().getCharacter();
+                        int y = location.getRange().getStart().getLine();
+                        SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
                     } else {
                         // show options in the floating window for selecting the denition
                     }
@@ -218,7 +221,10 @@ public class GlobalKeyHandler implements IKeyHandler {
             case 'j' -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY, visibleLines);
             case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY, visibleLines);
             case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
+            case 'w' -> buffer.moveNextWord();
+            case 'b' -> buffer.movePreviousWord();
         }
+
 
         lastKey = keyChar;
     }
