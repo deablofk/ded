@@ -24,6 +24,7 @@ import static org.lwjgl.sdl.SDLKeycode.*;
 public class GlobalKeyHandler implements IKeyHandler {
 
     private int lastKey = -1;
+    public static long lastKeyPressTime = 0;  // Track the last key press time
 
     @Override
     public void handle(SDL_Event e) {
@@ -41,6 +42,7 @@ public class GlobalKeyHandler implements IKeyHandler {
         } else if (mode == COMMAND) {
             handleCommand((char) keyChar, keyCode, mod);
         }
+        lastKeyPressTime = System.currentTimeMillis();
     }
 
 
@@ -52,13 +54,17 @@ public class GlobalKeyHandler implements IKeyHandler {
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
-            float windowX = SkiaRenderer.currentNode.x;
-            float windowY = SkiaRenderer.currentNode.y;
+            if (c == '.' || Character.isLetterOrDigit(c)) {
+                float windowX = SkiaRenderer.currentNode.x;
+                float windowY = SkiaRenderer.currentNode.y;
 
-            LSPManager.sendDidChangeNotification(buffer);
-            List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
-            SkiaRenderer.floatingWindow.setSuggestions(suggestions);
-            SkiaRenderer.floatingWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
+                LSPManager.sendDidChangeNotification(buffer);
+                List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
+                SkiaRenderer.floatingWindow.setSuggestions(suggestions);
+                SkiaRenderer.floatingWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
+            } else {
+                SkiaRenderer.floatingWindow.hide();
+            }
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));
         }
@@ -83,18 +89,18 @@ public class GlobalKeyHandler implements IKeyHandler {
             case SDLK_RETURN -> {
                 if (SkiaRenderer.floatingWindow.isVisible()) {
                     CompletionItem selectedItem = SkiaRenderer.floatingWindow.select();
-                    System.out.println(selectedItem.toString());
-
-                    Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
-                    if (eitherTextEdit.getLeft() != null) {
-                        TextEdit edit = eitherTextEdit.getLeft();
-                        buffer.replaceTextInRange(edit.getRange(), edit.getNewText());
-                        if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
-                            buffer.insertTextAtCursor("()");
-                            buffer.cursorX += 2;
+                    if (selectedItem != null) {
+                        Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
+                        if (eitherTextEdit.getLeft() != null) {
+                            TextEdit edit = eitherTextEdit.getLeft();
+                            buffer.replaceTextInRange(edit.getRange(), edit.getNewText());
+                            if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
+                                buffer.insertTextAtCursor("()");
+                                buffer.cursorX += 2;
+                            }
+                        } else {
+                            // TODO: insert text at cursor
                         }
-                    } else {
-                        // TODO: insert text at cursor
                     }
                 } else {
                     buffer.smartNewLine();
@@ -167,20 +173,6 @@ public class GlobalKeyHandler implements IKeyHandler {
         TextBuffer buffer = component.getBuffer();
         int visibleLines = (int) (node.height / FontManager.getLineHeight());
 
-        // movement
-        if ((mod & SDL_KMOD_ALT) != 0) {
-            WindowNode newNode = switch (keyCode) {
-                case SDLK_H -> node.moveLeft();
-                case SDLK_L -> node.moveRight();
-                case SDLK_J -> node.moveDown();
-                case SDLK_K -> node.moveUp();
-                default -> null;
-            };
-
-            if (newNode != null) {
-                return;
-            }
-        }
         switch (keyChar) {
             case 'i' -> {
                 startTextInput();
@@ -223,6 +215,31 @@ public class GlobalKeyHandler implements IKeyHandler {
             case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
             case 'w' -> buffer.moveNextWord();
             case 'b' -> buffer.movePreviousWord();
+            case '$' -> buffer.gotoPosition(buffer.getCurrentLine().length() - 1, buffer.cursorY);
+            case 'A' -> {
+                buffer.gotoPosition(buffer.getCurrentLine().length(), buffer.cursorY);
+                startTextInput();
+                Deditor.setBufferMode(INSERT);
+            }
+            case 'I' -> {
+                char c = buffer.getCurrentLine().toString().trim().charAt(0);
+                int index = buffer.getCurrentLine().indexOf(c + "");
+                buffer.gotoPosition(index, buffer.cursorY);
+                startTextInput();
+                Deditor.setBufferMode(INSERT);
+            }
+            // Window Movement (ALT + H/J/K/L)
+            case 'H', 'J', 'K', 'L' -> {
+                if ((mod & SDL_KMOD_ALT) != 0) {
+                    switch (keyChar) {
+                        case 'H' -> node.moveLeft();
+                        case 'L' -> node.moveRight();
+                        case 'J' -> node.moveDown();
+                        case 'K' -> node.moveUp();
+                    }
+                    ;
+                }
+            }
         }
 
 
