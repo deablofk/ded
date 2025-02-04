@@ -6,6 +6,7 @@ import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.treesitter.SyntaxHighlighter;
 import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Font;
@@ -79,9 +80,13 @@ public class TextComponent implements IComponent {
     public void renderCursor(Canvas canvas, float bufferX, float bufferY) {
         long now = System.currentTimeMillis();
 
-        if (now - lastBlinkTime >= Deditor.getConfig().cursor.blink) {
-            cursorVisible = !cursorVisible;
-            lastBlinkTime = now;
+        if (now - GlobalKeyHandler.lastKeyPressTime >= 5000) {
+            if (now - lastBlinkTime >= Deditor.getConfig().cursor.blink) {
+                cursorVisible = !cursorVisible;
+                lastBlinkTime = now;
+            }
+        } else {
+            cursorVisible = true;
         }
 
         TextComponent textComponent = (TextComponent) SkiaRenderer.currentNode.component;
