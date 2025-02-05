@@ -23,6 +23,7 @@ public class TextComponent implements IComponent {
     private static final Paint textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
     private static final Paint numberPaint = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().theme.numberColor));
     private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color));
+    private static final Paint selectColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.select));
 
     private TextBuffer buffer;
     private boolean cursorVisible = true;
@@ -109,7 +110,7 @@ public class TextComponent implements IComponent {
                 }
 
                 float y = (cursorY - buffer.offsetY) * FontManager.getLineHeight();
-                if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION) {
+                if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION || Deditor.getBufferMode() == TextInteractionMode.SELECT) {
                     canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, FontManager.getAvgWidth(), FontManager.getLineHeight()), cursorColor);
                 } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
                     canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, 2, FontManager.getLineHeight()), cursorColor);
@@ -117,6 +118,48 @@ public class TextComponent implements IComponent {
             }
         }
     }
+
+    public void renderSelection(Canvas canvas, float bufferX, float bufferY) {
+        int cursorX = buffer.cursorX;
+        int cursorY = buffer.cursorY;
+        int selectX = GlobalKeyHandler.startVisualX;
+        int selectY = GlobalKeyHandler.startVisualY;
+        if (Deditor.getBufferMode() == TextInteractionMode.SELECT) {
+            int startLine = Math.min(cursorY, selectY);
+            int endLine = Math.max(cursorY, selectY);
+            int startChar = (cursorY < selectY) ? cursorX : selectX;
+            int endChar = (cursorY > selectY) ? cursorX : selectX;
+
+            for (int line = startLine; line <= endLine; line++) {
+                float lineY = (line - buffer.offsetY) * FontManager.getLineHeight();
+                StringBuilder lineContent = buffer.lines.get(line);
+
+                int lineStart = (line == startLine) ? startChar : 0;
+                int lineEnd = (line == endLine) ? endChar : lineContent.length();
+                float startXOffset = 0;
+                float endXOffset = 0;
+
+                for (int i = 0; i < lineContent.length(); ) {
+                    int codePoint = lineContent.codePointAt(i);
+                    Font font = FontManager.getDefaultFont();
+                    String glyph = new String(Character.toChars(codePoint));
+                    float charWidth = font.measureTextWidth(glyph);
+
+                    if (i < lineStart) {
+                        startXOffset += charWidth;
+                    }
+                    if (i < lineEnd) {
+                        endXOffset += charWidth;
+                    }
+
+                    i += Character.charCount(codePoint);
+                }
+
+                canvas.drawRect(Rect.makeXYWH(bufferX + startXOffset, bufferY + lineY, endXOffset - startXOffset, FontManager.getLineHeight()), selectColor);
+            }
+        }
+    }
+
 
     private final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(5);
 
@@ -131,6 +174,7 @@ public class TextComponent implements IComponent {
             renderText(canvas, x, y, width, height, buffer.offsetY);
             if (SkiaRenderer.currentNode.component == this) {
                 renderCursor(canvas, x, y);
+                renderSelection(canvas, x, y);
             }
         }
         canvas.restore();

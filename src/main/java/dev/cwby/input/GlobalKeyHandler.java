@@ -2,6 +2,8 @@ package dev.cwby.input;
 
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
+import dev.cwby.clipboard.ClipboardManager;
+import dev.cwby.clipboard.ClipboardType;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
@@ -125,16 +127,38 @@ public class GlobalKeyHandler implements IKeyHandler {
             }
             case SDLK_V -> {
                 if ((mod & SDL_KMOD_CTRL) != 0) {
-                    String clipboard = SDLClipboard.SDL_GetClipboardText();
-                    buffer.insertTextAtCursor(clipboard);
+                    buffer.insertTextAtCursor(ClipboardManager.getClipboardContent(ClipboardType.SYSTEM));
                 }
             }
         }
     }
 
+    public static int startVisualX, startVisualY;
+
     public void handleSelect(char keyChar, int keyCode, short mod) {
+        WindowNode node = SkiaRenderer.currentNode;
+        TextBuffer buffer = SkiaRenderer.getCurrentTextBuffer();
+        int visibleLines = (int) (node.height / FontManager.getLineHeight());
+        if (keyCode == SDLK_ESCAPE) {
+            Deditor.setBufferMode(NAVIGATION);
+            return;
+        }
         switch (keyChar) {
-            case SDLK_ESCAPE -> Deditor.setBufferMode(NAVIGATION);
+            case 'h' -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY, visibleLines);
+            case 'j' -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY, visibleLines);
+            case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY, visibleLines);
+            case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
+            case 'y' -> {
+                String region = buffer.getRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
+                ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
+                Deditor.setBufferMode(NAVIGATION);
+            }
+            case 'd' -> {
+                String region = buffer.getRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
+                ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
+                buffer.deleteRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
+                Deditor.setBufferMode(NAVIGATION);
+            }
         }
     }
 
@@ -178,7 +202,19 @@ public class GlobalKeyHandler implements IKeyHandler {
                 startTextInput();
                 Deditor.setBufferMode(INSERT);
             }
-            case 'v' -> Deditor.setBufferMode(SELECT);
+            case 'v' -> {
+                startVisualX = buffer.cursorX;
+                startVisualY = buffer.cursorY;
+                Deditor.setBufferMode(SELECT);
+            }
+            case 'V' -> {
+                startVisualX = 0;
+                startVisualY = buffer.cursorY;
+                Deditor.setBufferMode(SELECT);
+            }
+            case 'p' -> {
+                buffer.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL));
+            }
             case 'o' -> {
                 startTextInput();
                 buffer.newLineDown();
@@ -237,7 +273,6 @@ public class GlobalKeyHandler implements IKeyHandler {
                         case 'J' -> node.moveDown();
                         case 'K' -> node.moveUp();
                     }
-                    ;
                 }
             }
         }

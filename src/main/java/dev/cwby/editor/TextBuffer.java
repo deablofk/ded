@@ -47,6 +47,27 @@ public class TextBuffer {
         builder.insert(this.cursorX, text);
     }
 
+    public void pasteText(String text) {
+        StringBuilder builder = getCurrentLine();
+        String[] parts = text.split("\n", -1);
+
+        builder.insert(cursorX, parts[0]);
+        cursorX += parts[0].length();
+
+        for (int i = 1; i < parts.length; i++) {
+            StringBuilder newLine = new StringBuilder(parts[i]);
+
+            if (i == 1) {
+                String remaining = builder.substring(cursorX);
+                builder.setLength(cursorX);
+                newLine.insert(0, remaining);
+            }
+
+            lines.add(++cursorY, newLine);
+            cursorX = newLine.length();
+        }
+    }
+
     public void replaceTextInRange(Range range, String text) {
         int startLine = range.getStart().getLine();
         int startChar = range.getStart().getCharacter();
@@ -218,4 +239,73 @@ public class TextBuffer {
     public List<StringBuilder> getLines() {
         return lines;
     }
+
+    public String getRegion(int startChar, int startLine, int endChar, int endLine) {
+        StringBuilder region = new StringBuilder();
+
+        if (startLine > endLine || (startLine == endLine && startChar > endChar)) {
+            int tempChar = startChar;
+            int tempLine = startLine;
+            startChar = endChar;
+            startLine = endLine;
+            endChar = tempChar;
+            endLine = tempLine;
+        }
+
+        for (int line = startLine; line <= endLine; line++) {
+            String content = String.valueOf(lines.get(line));
+
+            if (line == startLine && line == endLine) {
+                region.append(content, startChar, endChar).append("\n");
+            } else if (line == startLine) {
+                region.append(content.substring(startChar)).append("\n");
+            } else if (line == endLine) {
+                if (endChar + 1 < content.length()) {
+                    region.append(content, 0, endChar + 1);
+                } else {
+                    region.append(content, 0, endChar);
+                }
+            } else {
+                region.append(content).append("\n");
+            }
+        }
+
+        return region.toString();
+    }
+
+    public void deleteRegion(int startChar, int startLine, int endChar, int endLine) {
+        if (startLine > endLine || (startLine == endLine && startChar > endChar)) {
+            int tempChar = startChar;
+            int tempLine = startLine;
+            startChar = endChar;
+            startLine = endLine;
+            endChar = tempChar;
+            endLine = tempLine;
+        }
+
+        for (int line = startLine; line <= endLine; line++) {
+            StringBuilder content = lines.get(line);
+
+            if (line == startLine && line == endLine) {
+                content.delete(startChar, endChar);
+            } else if (line == startLine) {
+                content.delete(startChar, content.length());
+            } else if (line == endLine) {
+                content.delete(0, endChar);
+            } else {
+                lines.set(line, new StringBuilder()); // Clear intermediate lines
+            }
+        }
+
+        // Merge lines if deletion spanned multiple lines
+        if (startLine < lines.size() - 1 && startLine != endLine) {
+            lines.get(startLine).append(lines.get(endLine));
+            lines.remove(endLine);
+        }
+
+        // Adjust cursor position
+        cursorX = startChar;
+        cursorY = startLine;
+    }
+
 }

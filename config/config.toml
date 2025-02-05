@@ -1,6 +1,7 @@
 [cursor]
 blink = 500 # cursor blink interval
 color = "#77FFFFFF"
+select = "#8066B9FF"
 
 [font]
 family = "Iosevka Nerd Font Mono"

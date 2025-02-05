@@ -8,10 +8,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -71,6 +68,18 @@ public class LSPManager {
                 ProcessBuilder pb = new ProcessBuilder(JDTLS_DIR + "/jdtls", "-data", "/home/cwby/.cache/jdtls-workspace");
                 process = pb.start();
                 pb.redirectErrorStream(true);
+
+                // for some reason this prevent the application of being stuck, probably because the buffer dont have space at certain time
+                new Thread(() -> {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.err.println("[JDTLS ERROR] " + line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
 
                 initializeClient(root.getAbsolutePath(), process.getInputStream(), process.getOutputStream());
             }

@@ -1,8 +1,11 @@
 package dev.cwby.graphics;
 
+import dev.cwby.clipboard.ClipboardManager;
+import dev.cwby.clipboard.ClipboardType;
 import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.input.IKeyHandler;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLEvents;
 import org.lwjgl.sdl.SDL_Event;
 
@@ -65,6 +68,10 @@ public class Engine {
                         break;
                     case SDLEvents.SDL_EVENT_TEXT_INPUT:
                         keyHandler.handleInput(event);
+                        break;
+                    case SDLEvents.SDL_EVENT_CLIPBOARD_UPDATE:
+                        String clipboardText = SDLClipboard.SDL_GetClipboardText();
+                        ClipboardManager.setClipboardContent(ClipboardType.SYSTEM, clipboardText);
                         break;
                     case SDLEvents.SDL_EVENT_WINDOW_RESIZED:
                         var display = event.display();
