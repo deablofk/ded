@@ -5,7 +5,7 @@ import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
-import dev.cwby.graphics.layout.FloatingWindow;
+import dev.cwby.graphics.layout.AutoCompleteWindow;
 import dev.cwby.graphics.layout.WindowNode;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
@@ -22,7 +22,7 @@ public class SkiaRenderer implements IRender {
 
     public static WindowNode rootNode = new WindowNode(0, 0, 1280, 720 - FontManager.getLineHeight(), null);
     public static WindowNode currentNode = rootNode;
-    public static FloatingWindow floatingWindow = new FloatingWindow(0, 0, 400);
+    public static AutoCompleteWindow autoCompleteWindow = new AutoCompleteWindow(0, 0, 400, 0);
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
@@ -88,9 +88,9 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderAutoCompleteWindow(Canvas canvas) {
-        if (floatingWindow != null) {
+        if (autoCompleteWindow.isVisible()) {
             TextBuffer textBuffer = ((TextComponent) currentNode.component).getBuffer();
-            floatingWindow.render(canvas, textBuffer.cursorX, textBuffer.cursorY, rootNode.width, rootNode.height);
+            autoCompleteWindow.render(canvas, textBuffer.cursorX, textBuffer.cursorY, rootNode.width, rootNode.height);
         }
     }
 

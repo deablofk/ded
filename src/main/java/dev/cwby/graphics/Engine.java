@@ -41,12 +41,12 @@ public class Engine {
 
     public void initSDL() {
         if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw new IllegalStateException("Unable to initialize GLFW");
+            throw new IllegalStateException("Unable to initialize SDL");
         }
 
-        window = SDL_CreateWindow("Hello World!", width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE);
+        window = SDL_CreateWindow("Deditor", width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE);
         if (window == NULL) {
-            throw new RuntimeException("Failed to create the GLFW window");
+            throw new RuntimeException("Failed to create the SDL window");
         }
 
         SDL_GL_CreateContext(window);

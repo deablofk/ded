@@ -62,10 +62,10 @@ public class GlobalKeyHandler implements IKeyHandler {
 
                 LSPManager.sendDidChangeNotification(buffer);
                 List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
-                SkiaRenderer.floatingWindow.setSuggestions(suggestions);
-                SkiaRenderer.floatingWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
+                SkiaRenderer.autoCompleteWindow.setSuggestions(suggestions);
+                SkiaRenderer.autoCompleteWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
             } else {
-                SkiaRenderer.floatingWindow.hide();
+                SkiaRenderer.autoCompleteWindow.hide();
             }
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));
@@ -86,11 +86,11 @@ public class GlobalKeyHandler implements IKeyHandler {
             case SDLK_ESCAPE -> {
                 stopTextInput();
                 Deditor.setBufferMode(NAVIGATION);
-                SkiaRenderer.floatingWindow.hide();
+                SkiaRenderer.autoCompleteWindow.hide();
             }
             case SDLK_RETURN -> {
-                if (SkiaRenderer.floatingWindow.isVisible()) {
-                    CompletionItem selectedItem = SkiaRenderer.floatingWindow.select();
+                if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                    CompletionItem selectedItem = SkiaRenderer.autoCompleteWindow.select();
                     if (selectedItem != null) {
                         Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
                         if (eitherTextEdit.getLeft() != null) {
@@ -110,7 +110,7 @@ public class GlobalKeyHandler implements IKeyHandler {
             }
             case SDLK_BACKSPACE -> {
                 buffer.removeChar();
-                SkiaRenderer.floatingWindow.hide();
+                SkiaRenderer.autoCompleteWindow.hide();
             }
             case SDLK_DELETE -> {
                 if ((mod & SDL_KMOD_CTRL) != 0) {
