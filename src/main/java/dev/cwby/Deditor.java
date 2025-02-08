@@ -10,6 +10,7 @@ public class Deditor {
     private static Engine engine;
     private static EditorConfig config;
     private static TextInteractionMode MODE;
+    private static String projectPath;
 
     public static void setBufferMode(TextInteractionMode mode) {
         MODE = mode;
@@ -25,6 +26,14 @@ public class Deditor {
 
     public static Engine getEngine() {
         return engine;
+    }
+
+    public static String getProjectPath() {
+        if (projectPath == null) {
+            projectPath = System.getProperty("user.dir");
+        }
+
+        return projectPath;
     }
 
     public static void main(String[] args) {

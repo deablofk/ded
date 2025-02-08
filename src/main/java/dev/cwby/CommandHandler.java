@@ -1,6 +1,7 @@
 package dev.cwby;
 
 import dev.cwby.commands.*;
+import dev.cwby.graphics.layout.component.FZFComponent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class CommandHandler {
         COMMANDS.put("e", edit);
         COMMANDS.put("vs", new VerticalSplit());
         COMMANDS.put("s", new Split());
+        COMMANDS.put("fzf", new ToggleFZF());
     }
 
     public static void setCommand(String command, ICommand mode) {

@@ -29,16 +29,6 @@ public class AutoCompleteWindow extends FloatingWindow {
         this.visible = !suggestions.isEmpty();
     }
 
-    public void show(float x, float y) {
-        this.x = x;
-        this.y = y;
-        this.visible = true;
-    }
-
-    public void hide() {
-        this.visible = false;
-    }
-
     @Override
     public void render(Canvas canvas, float offsetX, float offsetY, float parentWidth, float parentHeight) {
         if (!visible) return;
@@ -73,7 +63,4 @@ public class AutoCompleteWindow extends FloatingWindow {
         return null;
     }
 
-    public boolean isVisible() {
-        return visible;
-    }
 }
