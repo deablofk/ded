@@ -39,7 +39,7 @@ public class TextComponent implements IComponent {
     }
 
     private void drawHighlightedText(Canvas canvas, String text, float x, float y, float width, float height, Map<Integer, Paint> styles) {
-        float offsetX = x;
+        float offsetX = x - buffer.offsetX;
         var currentText = new StringBuilder();
         Paint currentPaint = null;
         Font font = FontManager.getDefaultFont();
