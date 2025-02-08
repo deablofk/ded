@@ -14,6 +14,7 @@ public class AutoCompleteWindow extends FloatingWindow {
     private List<CompletionItem> suggestions = new ArrayList<>();
     private int selectedIndex = 0;
 
+    private static final Paint selectedPaint = new Paint().setColor(0xFF00FF00);
     private static final Paint bgPaint = new Paint().setColor(0xFF2E2E2E);
     private static final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(3);
     private static final Paint textPaint = new Paint().setColor(0xFFFFFFFF);
@@ -42,7 +43,7 @@ public class AutoCompleteWindow extends FloatingWindow {
         float textY = y + FontManager.getLineHeight();
         for (int i = 0; i < suggestions.size(); i++) {
             CompletionItem item = suggestions.get(i);
-            Paint paint = (i == selectedIndex) ? new Paint().setColor(0xFF00FF00) : textPaint;
+            Paint paint = (i == selectedIndex) ? selectedPaint : textPaint;
             canvas.drawString(item.getLabel(), x + 5, textY, font, paint);
             textY += FontManager.getLineHeight();
         }
@@ -58,7 +59,9 @@ public class AutoCompleteWindow extends FloatingWindow {
     public CompletionItem select() {
         if (visible && !suggestions.isEmpty()) {
             hide();
-            return suggestions.get(selectedIndex);
+            CompletionItem ci = suggestions.get(selectedIndex);
+            selectedIndex = 0;
+            return ci;
         }
         return null;
     }

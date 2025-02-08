@@ -10,6 +10,7 @@ import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.WindowNode;
+import dev.cwby.graphics.layout.component.FZFComponent;
 import dev.cwby.graphics.layout.component.TextComponent;
 import dev.cwby.lsp.LSPManager;
 import org.eclipse.lsp4j.*;
@@ -130,6 +131,24 @@ public class GlobalKeyHandler implements IKeyHandler {
                     buffer.insertTextAtCursor(ClipboardManager.getClipboardContent(ClipboardType.SYSTEM));
                 }
             }
+            case SDLK_P -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                        SkiaRenderer.autoCompleteWindow.moveSelection(-1);
+                    } else if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
+                        ((FZFComponent) SkiaRenderer.floatingWindow).prev();
+                    }
+                }
+            }
+            case SDLK_N -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                        SkiaRenderer.autoCompleteWindow.moveSelection(1);
+                    } else if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
+                        ((FZFComponent) SkiaRenderer.floatingWindow).next();
+                    }
+                }
+            }
         }
     }
 
@@ -218,7 +237,20 @@ public class GlobalKeyHandler implements IKeyHandler {
                 Deditor.setBufferMode(SELECT);
             }
             case 'p' -> {
-                buffer.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL));
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
+                        ((FZFComponent) SkiaRenderer.floatingWindow).prev();
+                    }
+                } else {
+                    buffer.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL));
+                }
+            }
+            case 'n' -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
+                        ((FZFComponent) SkiaRenderer.floatingWindow).next();
+                    }
+                }
             }
             case 'o' -> {
                 startTextInput();
@@ -280,6 +312,15 @@ public class GlobalKeyHandler implements IKeyHandler {
                         case 'J' -> node.moveDown();
                         case 'K' -> node.moveUp();
                     }
+                }
+            }
+        }
+
+        switch (keyCode) {
+            case SDLK_RETURN -> {
+                if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
+                    String result = ((FZFComponent)SkiaRenderer.floatingWindow).select();
+                    CommandHandler.executeCommand("edit " + result);
                 }
             }
         }

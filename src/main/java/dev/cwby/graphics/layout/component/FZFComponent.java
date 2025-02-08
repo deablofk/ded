@@ -19,24 +19,18 @@ import java.util.stream.Collectors;
 public class FZFComponent extends FloatingWindow {
 
     private final Paint paint = new Paint().setColor(0xFFFFFFFF);
-    // this reads all files on creating a new FZF Component Instance
     private final List<String> files = findAllFiles(Deditor.getProjectPath());
     private final List<String> results = new ArrayList<>();
     private int index = 0;
     private static final Paint bgPaint = new Paint().setColor(0xFF2E2E2E);
     private static final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(3);
+    private static final Paint selectedPaint = new Paint().setColor(0xFF00FF00);
 
     private String query = "";
 
-    // initial
     public FZFComponent(float x, float y, float width, float height) {
         super(x, y, width, height);
     }
-
-    public List<String> getCachedFiles() {
-        return files;
-    }
-
 
     private List<String> findAllFiles(String projectPath) {
         try {
@@ -70,8 +64,8 @@ public class FZFComponent extends FloatingWindow {
 
     @Override
     public void render(Canvas canvas, float x, float y, float width, float height) {
-        width *= 0.9;
-        height *= 0.9;
+        width *= 0.9F;
+        height *= 0.9F;
         x = (float) (x + (width * 0.1) / 2);
         y = (float) (y + (height * 0.1) / 2);
         canvas.save();
@@ -80,10 +74,14 @@ public class FZFComponent extends FloatingWindow {
         canvas.drawRect(rect, bgPaint);
         canvas.drawRect(rect, borderPaint);
 
-        float currentY = y + FontManager.getLineHeight();
-        for (String result : results) {
-            canvas.drawString(result, x + 10, currentY, FontManager.getDefaultFont(), paint);
-            currentY += FontManager.getLineHeight();
+        float lineHeight = FontManager.getLineHeight();
+        for (int i = 0; i < results.size(); i++) {
+            String result = results.get(i);
+            if (index == i) {
+                canvas.drawString(result, x + 10, y + lineHeight + (i * lineHeight), FontManager.getDefaultFont(), selectedPaint);
+            } else {
+                canvas.drawString(result, x + 10, y + lineHeight + (i * lineHeight), FontManager.getDefaultFont(), paint);
+            }
         }
 
         canvas.restore();
@@ -91,7 +89,10 @@ public class FZFComponent extends FloatingWindow {
 
     // return a path to a file
     public String select() {
-        return results.get(index);
+        String result = results.get(index);
+        index = 0;
+        hide();
+        return result;
     }
 
     public void prev() {
