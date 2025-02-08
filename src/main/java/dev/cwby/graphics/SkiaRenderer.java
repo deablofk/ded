@@ -21,7 +21,7 @@ public class SkiaRenderer implements IRender {
 
     private final Paint textPaint;
 
-    public static WindowNode rootNode = new WindowNode(0, 0, 1280, 720 - FontManager.getLineHeight(), null);
+    public static WindowNode rootNode = new WindowNode(0, 0, Engine.getWidth(), Engine.getHeight() - FontManager.getLineHeight(), null);
     public static WindowNode currentNode = rootNode;
     public static AutoCompleteWindow autoCompleteWindow = new AutoCompleteWindow(0, 0, 400, 0);
     public static FloatingWindow floatingWindow = null;
@@ -31,7 +31,7 @@ public class SkiaRenderer implements IRender {
 
         textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
         rootNode.component = new TextComponent();
-        onResize(1280, 720);
+        onResize(Engine.getWidth(), Engine.getHeight());
         if (BufferManager.shouldOpenEmptyBuffer) {
             System.out.println("Opening empty buffer");
             currentNode.component = new TextComponent().setBuffer(BufferManager.addEmptyBuffer());
