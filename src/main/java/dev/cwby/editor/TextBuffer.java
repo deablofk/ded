@@ -185,14 +185,13 @@ public class TextBuffer {
         this.cursorY = Math.min(Math.max(0, y), this.lines.size() - 1);
         this.cursorX = Math.min(Math.max(0, x), getCurrentLine().length());
 
-        if (cursorY > offsetY + visibleLines - 1) {
-            offsetY++;
-        }
-
-        if (cursorY < offsetY) {
+        if (cursorY >= offsetY + visibleLines) {
+            offsetY = cursorY - visibleLines + 1;
+        } else if (cursorY < offsetY) {
             offsetY = cursorY;
         }
     }
+
 
     public void moveNextWord() {
         StringBuilder currentLine = getCurrentLine();

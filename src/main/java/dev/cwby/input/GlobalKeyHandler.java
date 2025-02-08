@@ -198,6 +198,11 @@ public class GlobalKeyHandler implements IKeyHandler {
         int visibleLines = (int) (node.height / FontManager.getLineHeight());
 
         switch (keyChar) {
+            case 'u' -> {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    buffer.moveCursor(buffer.cursorX, buffer.cursorY - visibleLines / 2, visibleLines);
+                }
+            }
             case 'i' -> {
                 startTextInput();
                 Deditor.setBufferMode(INSERT);
@@ -226,7 +231,9 @@ public class GlobalKeyHandler implements IKeyHandler {
                 Deditor.setBufferMode(INSERT);
             }
             case 'd' -> {
-                if (lastKey == 'd') {
+                if ((mod & SDL_KMOD_CTRL) != 0) {
+                    buffer.moveCursor(buffer.cursorX, buffer.cursorY + visibleLines / 2, visibleLines);
+                } else if (lastKey == 'd') {
                     buffer.deleteCurrentLine();
                 } else if (lastKey == 'g') {
                     List<Location> definitions = LSPManager.getDefinitions(buffer.file.getAbsolutePath(), buffer.cursorY, buffer.cursorX);
