@@ -3,7 +3,6 @@ package dev.cwby.commands;
 import dev.cwby.BufferManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
-import dev.cwby.lsp.LSPManager;
 
 public class Edit implements ICommand {
 
@@ -13,7 +12,7 @@ public class Edit implements ICommand {
             System.out.println("Specify the File Path");
             return false;
         }
-        SkiaRenderer.currentNode.component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
+        SkiaRenderer.currentWindow.component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
         return true;
     }
 

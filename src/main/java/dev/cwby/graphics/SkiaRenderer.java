@@ -7,7 +7,8 @@ import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.layout.AutoCompleteWindow;
 import dev.cwby.graphics.layout.FloatingWindow;
-import dev.cwby.graphics.layout.WindowNode;
+import dev.cwby.graphics.layout.Window;
+import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
@@ -21,8 +22,8 @@ public class SkiaRenderer implements IRender {
 
     private final Paint textPaint;
 
-    public static WindowNode rootNode = new WindowNode(0, 0, Engine.getWidth(), Engine.getHeight() - FontManager.getLineHeight(), null);
-    public static WindowNode currentNode = rootNode;
+    public static TiledWindow rootNode = new TiledWindow(0, 0, Engine.getWidth(), Engine.getHeight() - FontManager.getLineHeight(), null);
+    public static Window currentWindow = rootNode;
     public static AutoCompleteWindow autoCompleteWindow = new AutoCompleteWindow(0, 0, 400, 0);
     public static FloatingWindow floatingWindow = null;
 
@@ -34,7 +35,7 @@ public class SkiaRenderer implements IRender {
         onResize(Engine.getWidth(), Engine.getHeight());
         if (BufferManager.shouldOpenEmptyBuffer) {
             System.out.println("Opening empty buffer");
-            currentNode.component = new TextComponent().setBuffer(BufferManager.addEmptyBuffer());
+            currentWindow.component = new TextComponent().setBuffer(BufferManager.addEmptyBuffer());
         }
     }
 
@@ -79,7 +80,7 @@ public class SkiaRenderer implements IRender {
     }
 
 
-    public void renderRegion(Canvas canvas, WindowNode node) {
+    public void renderRegion(Canvas canvas, TiledWindow node) {
         if (node.isLeaf()) {
             if (node.component != null) {
                 node.component.render(canvas, node.x, node.y, node.width, node.height);
@@ -92,7 +93,7 @@ public class SkiaRenderer implements IRender {
 
     public void renderAutoCompleteWindow(Canvas canvas) {
         if (autoCompleteWindow.isVisible()) {
-            TextBuffer textBuffer = ((TextComponent) currentNode.component).getBuffer();
+            TextBuffer textBuffer = ((TextComponent) currentWindow.component).getBuffer();
             autoCompleteWindow.render(canvas, textBuffer.cursorX, textBuffer.cursorY, rootNode.width, rootNode.height);
         }
     }
@@ -108,6 +109,6 @@ public class SkiaRenderer implements IRender {
     }
 
     public static TextBuffer getCurrentTextBuffer() {
-        return ((TextComponent) currentNode.component).getBuffer();
+        return ((TextComponent) currentWindow.component).getBuffer();
     }
 }

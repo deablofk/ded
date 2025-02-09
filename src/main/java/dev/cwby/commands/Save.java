@@ -7,12 +7,11 @@ import dev.cwby.graphics.layout.component.TextComponent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.List;
 
 public class Save implements ICommand {
     @Override
     public boolean run(String[] args) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
+        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
 
         File file = buffer.file;
         if (file != null) {

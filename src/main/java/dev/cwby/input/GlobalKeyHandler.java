@@ -9,7 +9,8 @@ import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
-import dev.cwby.graphics.layout.WindowNode;
+import dev.cwby.graphics.layout.TiledWindow;
+import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.component.FZFComponent;
 import dev.cwby.graphics.layout.component.TextComponent;
 import dev.cwby.lsp.LSPManager;
@@ -51,15 +52,15 @@ public class GlobalKeyHandler implements IKeyHandler {
 
     @Override
     public void handleInput(SDL_Event event) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
+        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
         TextInteractionMode mode = Deditor.getBufferMode();
         if (mode == INSERT) {
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
             if (c == '.' || Character.isLetterOrDigit(c)) {
-                float windowX = SkiaRenderer.currentNode.x;
-                float windowY = SkiaRenderer.currentNode.y;
+                float windowX = SkiaRenderer.currentWindow.x;
+                float windowY = SkiaRenderer.currentWindow.y;
 
                 LSPManager.sendDidChangeNotification(buffer);
                 List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
@@ -82,7 +83,7 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     public void handleInsert(char keyChar, int keyCode, short mod) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentNode.component).getBuffer();
+        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
         switch (keyCode) {
             case SDLK_ESCAPE -> {
                 stopTextInput();
@@ -155,9 +156,9 @@ public class GlobalKeyHandler implements IKeyHandler {
     public static int startVisualX, startVisualY;
 
     public void handleSelect(char keyChar, int keyCode, short mod) {
-        WindowNode node = SkiaRenderer.currentNode;
+        Window window = SkiaRenderer.currentWindow;
         TextBuffer buffer = SkiaRenderer.getCurrentTextBuffer();
-        int visibleLines = (int) (node.height / FontManager.getLineHeight());
+        int visibleLines = (int) (window.height / FontManager.getLineHeight());
         if (keyCode == SDLK_ESCAPE) {
             Deditor.setBufferMode(NAVIGATION);
             return;
@@ -211,10 +212,10 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     public void handleNavigation(int keyChar, int keyCode, short mod) {
-        WindowNode node = SkiaRenderer.currentNode;
-        TextComponent component = (TextComponent) node.component;
+        Window window = SkiaRenderer.currentWindow;
+        TextComponent component = (TextComponent) window.component;
         TextBuffer buffer = component.getBuffer();
-        int visibleLines = (int) (node.height / FontManager.getLineHeight());
+        int visibleLines = (int) (window.height / FontManager.getLineHeight());
 
         switch (keyChar) {
             case 'u' -> {
@@ -305,12 +306,14 @@ public class GlobalKeyHandler implements IKeyHandler {
             }
             // Window Movement (ALT + H/J/K/L)
             case 'H', 'J', 'K', 'L' -> {
-                if ((mod & SDL_KMOD_ALT) != 0) {
-                    switch (keyChar) {
-                        case 'H' -> node.moveLeft();
-                        case 'L' -> node.moveRight();
-                        case 'J' -> node.moveDown();
-                        case 'K' -> node.moveUp();
+                if (window instanceof TiledWindow tiledWindow) {
+                    if ((mod & SDL_KMOD_ALT) != 0) {
+                        switch (keyChar) {
+                            case 'H' -> tiledWindow.moveLeft();
+                            case 'L' -> tiledWindow.moveRight();
+                            case 'J' -> tiledWindow.moveDown();
+                            case 'K' -> tiledWindow.moveUp();
+                        }
                     }
                 }
             }
@@ -319,7 +322,7 @@ public class GlobalKeyHandler implements IKeyHandler {
         switch (keyCode) {
             case SDLK_RETURN -> {
                 if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                    String result = ((FZFComponent)SkiaRenderer.floatingWindow).select();
+                    String result = ((FZFComponent) SkiaRenderer.floatingWindow).select();
                     CommandHandler.executeCommand("edit " + result);
                 }
             }

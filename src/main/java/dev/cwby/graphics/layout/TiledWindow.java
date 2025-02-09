@@ -1,21 +1,16 @@
 package dev.cwby.graphics.layout;
 
+import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.SkiaRenderer;
-import dev.cwby.graphics.layout.component.IComponent;
 import dev.cwby.graphics.layout.component.SplitType;
+import dev.cwby.lsp.LSPManager;
 
-public class WindowNode {
-    public float x, y, width, height;
-    public IComponent component;
-    public WindowNode leftChild, rightChild;
+public class TiledWindow extends Window {
+    public TiledWindow leftChild, rightChild, father;
     public SplitType splitType = SplitType.NONE;
-    public WindowNode father;
 
-    public WindowNode(float x, float y, float width, float height, WindowNode father) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+    public TiledWindow(float x, float y, float width, float height, TiledWindow father) {
+        super("", x, y, width, height);
         this.father = father;
     }
 
@@ -36,8 +31,8 @@ public class WindowNode {
             throw new IllegalArgumentException("Left width must be between 0 and the total width.");
         }
 
-        leftChild = new WindowNode(x, y, leftWidth, height, this);
-        rightChild = new WindowNode(x + leftWidth, y, width - leftWidth, height, this);
+        leftChild = new TiledWindow(x, y, leftWidth, height, this);
+        rightChild = new TiledWindow(x + leftWidth, y, width - leftWidth, height, this);
         splitType = SplitType.VERTICAL;
         updateSize(x, y, width, height);
     }
@@ -47,8 +42,8 @@ public class WindowNode {
             throw new IllegalArgumentException("Top height must be between 0 and the total height.");
         }
 
-        leftChild = new WindowNode(x, y, width, topHeight, this);
-        rightChild = new WindowNode(x, y + topHeight, width, height - topHeight, this);
+        leftChild = new TiledWindow(x, y, width, topHeight, this);
+        rightChild = new TiledWindow(x, y + topHeight, width, height - topHeight, this);
         splitType = SplitType.HORIZONTAL;
         updateSize(x, y, width, height);
     }
@@ -85,10 +80,10 @@ public class WindowNode {
         }
     }
 
-    private WindowNode findNeighbor(int direction) {
-        WindowNode node = this;
+    private TiledWindow findNeighbor(int direction) {
+        TiledWindow node = this;
         while (node.father != null) {
-            WindowNode sibling = (node == node.father.leftChild) ? node.father.rightChild : node.father.leftChild;
+            TiledWindow sibling = (node == node.father.leftChild) ? node.father.rightChild : node.father.leftChild;
             if (sibling != null) {
                 if (direction == 0 && sibling.x + sibling.width == node.x) return findLeaf(sibling); // Left
                 if (direction == 1 && sibling.x == node.x + node.width) return findLeaf(sibling); // Right
@@ -100,10 +95,10 @@ public class WindowNode {
         return null;
     }
 
-    private WindowNode findLeaf(WindowNode node) {
+    private TiledWindow findLeaf(TiledWindow node) {
         while (!node.isLeaf()) {
-            WindowNode closerChild;
-            WindowNode fartherChild;
+            TiledWindow closerChild;
+            TiledWindow fartherChild;
 
             float leftDistance = (float) Math.sqrt(Math.pow(node.leftChild.x - this.x, 2) + Math.pow(node.leftChild.y - this.y, 2));
             float rightDistance = (float) Math.sqrt(Math.pow(node.rightChild.x - this.x, 2) + Math.pow(node.rightChild.y - this.y, 2));
@@ -124,43 +119,45 @@ public class WindowNode {
         return node;
     }
 
-    public WindowNode moveLeft() {
-        WindowNode neighbor = findNeighbor(0);
-        if (neighbor != null) SkiaRenderer.currentNode = neighbor;
+    public TiledWindow moveLeft() {
+        TiledWindow neighbor = findNeighbor(0);
+        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
         return neighbor;
     }
 
-    public WindowNode moveRight() {
-        WindowNode neighbor = findNeighbor(1);
-        if (neighbor != null) SkiaRenderer.currentNode = neighbor;
+    public TiledWindow moveRight() {
+        TiledWindow neighbor = findNeighbor(1);
+        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
         return neighbor;
     }
 
-    public WindowNode moveUp() {
-        WindowNode neighbor = findNeighbor(2);
-        if (neighbor != null) SkiaRenderer.currentNode = neighbor;
+    public TiledWindow moveUp() {
+        TiledWindow neighbor = findNeighbor(2);
+        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
         return neighbor;
     }
 
-    public WindowNode moveDown() {
-        WindowNode neighbor = findNeighbor(3);
-        if (neighbor != null) SkiaRenderer.currentNode = neighbor;
+    public TiledWindow moveDown() {
+        TiledWindow neighbor = findNeighbor(3);
+        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
         return neighbor;
     }
 
+    @Override
     public void close() {
         if (this.father == null) {
-            System.out.println("Can't close because the current node is the root.");
+            LSPManager.closeAllLsp();
+            Engine.setShouldClose(true);
             return;
         }
 
-        WindowNode sibling = (this == father.leftChild) ? father.rightChild : father.leftChild;
+        TiledWindow sibling = (this == father.leftChild) ? father.rightChild : father.leftChild;
 
         if (sibling != null) {
             if (father.father == null) {
                 SkiaRenderer.rootNode = sibling;
                 sibling.father = null;
-                SkiaRenderer.currentNode = findLeaf(sibling);
+                SkiaRenderer.currentWindow = findLeaf(sibling);
             } else {
                 sibling.father = father.father;
 
@@ -170,7 +167,7 @@ public class WindowNode {
                     father.father.rightChild = sibling;
                 }
 
-                SkiaRenderer.currentNode = findLeaf(sibling);
+                SkiaRenderer.currentWindow = findLeaf(sibling);
             }
 
             sibling.updateSize(father.x, father.y, father.width, father.height);
@@ -187,7 +184,7 @@ public class WindowNode {
                 SkiaRenderer.rootNode = null;
             }
 
-            SkiaRenderer.currentNode = father.father;
+            SkiaRenderer.currentWindow = father.father;
         }
     }
 }
