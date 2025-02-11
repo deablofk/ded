@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FZFComponent extends FloatingWindow {
+public class FZFComponent extends FloatingWindow implements IComponent {
 
     private final Paint paint = new Paint().setColor(0xFFFFFFFF);
     private final List<String> files = findAllFiles(Deditor.getProjectPath());
@@ -30,6 +30,7 @@ public class FZFComponent extends FloatingWindow {
 
     public FZFComponent(float x, float y, float width, float height) {
         super(x, y, width, height);
+        this.component = this;
     }
 
     private List<String> findAllFiles(String projectPath) {

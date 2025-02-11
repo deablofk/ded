@@ -7,8 +7,8 @@ import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.layout.AutoCompleteWindow;
 import dev.cwby.graphics.layout.FloatingWindow;
-import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.TiledWindow;
+import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.component.TextComponent;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
@@ -25,7 +25,6 @@ public class SkiaRenderer implements IRender {
     public static TiledWindow rootNode = new TiledWindow(0, 0, Engine.getWidth(), Engine.getHeight() - FontManager.getLineHeight(), null);
     public static Window currentWindow = rootNode;
     public static AutoCompleteWindow autoCompleteWindow = new AutoCompleteWindow(0, 0, 400, 0);
-    public static FloatingWindow floatingWindow = null;
 
     public SkiaRenderer() {
         context = DirectContext.makeGL();
@@ -73,7 +72,9 @@ public class SkiaRenderer implements IRender {
     public void render(int width, int height) {
         renderRegion(canvas, rootNode);
         renderStatusLine(0, height - FontManager.getLineHeight(), width, height);
-        renderFloatingWindows(canvas);
+        if (currentWindow instanceof FloatingWindow floatingWindow && currentWindow.isVisible()) {
+            floatingWindow.getComponent().render(canvas, 0, 0, rootNode.width, rootNode.height);
+        }
         renderAutoCompleteWindow(canvas);
         context.flush();
         surface.flushAndSubmit();
@@ -92,20 +93,17 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderAutoCompleteWindow(Canvas canvas) {
-        if (autoCompleteWindow.isVisible()) {
-            TextBuffer textBuffer = ((TextComponent) currentWindow.component).getBuffer();
-            autoCompleteWindow.render(canvas, textBuffer.cursorX, textBuffer.cursorY, rootNode.width, rootNode.height);
+        if (autoCompleteWindow.isVisible() && currentWindow.component instanceof TextComponent textComponent) {
+            var buffer = textComponent.getBuffer();
+            autoCompleteWindow.render(canvas, buffer.cursorX, buffer.cursorY, rootNode.width, rootNode.height);
         }
     }
 
-    public void renderFloatingWindows(Canvas canvas) {
-        if (floatingWindow != null && floatingWindow.isVisible()) {
-            floatingWindow.render(canvas, rootNode.x, rootNode.y, rootNode.width, rootNode.height);
+    public static void openFloatingWindow(FloatingWindow floatingWindow) {
+        if (!floatingWindow.isVisible()) {
+            floatingWindow.show(0, 0);
         }
-    }
-
-    public static void setFloatingWindow(FloatingWindow window) {
-        floatingWindow = window;
+        currentWindow = floatingWindow;
     }
 
     public static TextBuffer getCurrentTextBuffer() {

@@ -14,13 +14,7 @@ public class ToggleFZF implements ICommand {
             fzfComponent.search(query);
         }
 
-        if (fzfComponent.isVisible()) {
-            fzfComponent.hide();
-            SkiaRenderer.setFloatingWindow(null);
-        } else {
-            fzfComponent.show(0, 0);
-            SkiaRenderer.setFloatingWindow(fzfComponent);
-        }
+        SkiaRenderer.openFloatingWindow(fzfComponent);
         return true;
     }
 }

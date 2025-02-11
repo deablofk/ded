@@ -45,6 +45,7 @@ public class TextBuffer {
     public void insertTextAtCursor(String text) {
         StringBuilder builder = getCurrentLine();
         builder.insert(this.cursorX, text);
+        cursorX += text.length();
     }
 
     public void pasteText(String text) {
@@ -192,6 +193,42 @@ public class TextBuffer {
         }
     }
 
+    public void moveCursorLeft(int visibleLines) {
+        moveCursor(--cursorX, cursorY, visibleLines);
+    }
+
+    public void moveCursorRight(int visibleLines) {
+        moveCursor(++cursorX, cursorY, visibleLines);
+    }
+
+    public void moveCursorUp(int visibleLines) {
+        moveCursor(cursorX, --cursorY, visibleLines);
+    }
+
+    public void moveCursorDown(int visibleLines) {
+        moveCursor(cursorX, ++cursorY, visibleLines);
+    }
+
+    public void moveCursorHalfUp(int visibleLines) {
+        moveCursor(cursorX, cursorY - visibleLines / 2, visibleLines);
+    }
+
+    public void moveCursorHalfDown(int visibleLines) {
+        moveCursor(cursorX, cursorY + visibleLines / 2, visibleLines);
+    }
+
+    public void moveToFirstNonWhitespaceChar() {
+        char c = getCurrentLine().toString().trim().charAt(0);
+        int index = getCurrentLine().indexOf(c + "");
+        gotoPosition(index, cursorY);
+    }
+
+    public void moveToLastNonWhitespaceChar() {
+        String trimed = getCurrentLine().toString().trim();
+        char c = trimed.charAt(trimed.length() - 1);
+        int index = getCurrentLine().indexOf(c + "");
+        gotoPosition(index + 1, cursorY);
+    }
 
     public void moveNextWord() {
         StringBuilder currentLine = getCurrentLine();

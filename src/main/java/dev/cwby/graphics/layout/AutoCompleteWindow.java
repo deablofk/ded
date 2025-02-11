@@ -1,6 +1,7 @@
 package dev.cwby.graphics.layout;
 
 import dev.cwby.graphics.FontManager;
+import dev.cwby.graphics.layout.component.IComponent;
 import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Font;
 import io.github.humbleui.skija.Paint;
@@ -10,7 +11,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AutoCompleteWindow extends FloatingWindow {
+public class AutoCompleteWindow extends FloatingWindow implements IComponent {
     private List<CompletionItem> suggestions = new ArrayList<>();
     private int selectedIndex = 0;
 
@@ -22,6 +23,7 @@ public class AutoCompleteWindow extends FloatingWindow {
 
     public AutoCompleteWindow(float x, float y, float width, float height) {
         super(x, y, width, height);
+        this.component = this;
     }
 
     public void setSuggestions(List<CompletionItem> suggestions) {

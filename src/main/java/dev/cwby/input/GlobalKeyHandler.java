@@ -16,11 +16,13 @@ import dev.cwby.graphics.layout.component.TextComponent;
 import dev.cwby.lsp.LSPManager;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLKeyboard;
 import org.lwjgl.sdl.SDL_Event;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static dev.cwby.editor.TextInteractionMode.*;
 import static org.lwjgl.sdl.SDLKeycode.*;
@@ -28,33 +30,344 @@ import static org.lwjgl.sdl.SDLKeycode.*;
 public class GlobalKeyHandler implements IKeyHandler {
 
     private int lastKey = -1;
-    public static long lastKeyPressTime = 0;  // Track the last key press time
+    private StringBuilder keySequence = new StringBuilder();
+    private static final long SEQUENCE_TIMEOUT = 500;
+    public static long lastKeyPressTime = 0;
+
+    private static final Map<String, BiConsumer<Window, TextBuffer>> navigationMappings = new HashMap<>();
+    private static final Map<String, BiConsumer<Window, TextBuffer>> insertMappings = new HashMap<>();
+    private static final Map<String, BiConsumer<Window, TextBuffer>> selectMappings = new HashMap<>();
+    private static final Map<String, BiConsumer<Window, TextBuffer>> commandMappings = new HashMap<>();
+    private static final Map<String, BiConsumer<Window, TextBuffer>> globalMappings = new HashMap<>();
+    public static int startVisualX, startVisualY;
+
+    public GlobalKeyHandler() {
+        registerNormalMappings();
+        registerSelectMappings();
+        registerInsertMappings();
+        registerCommandMappings();
+    }
+
+    public static void map(TextInteractionMode mode, String key, BiConsumer<Window, TextBuffer> consumer) {
+        switch (mode) {
+            case NAVIGATION -> navigationMappings.put(key, consumer);
+            case INSERT -> insertMappings.put(key, consumer);
+            case SELECT, SELECT_LINE, SELECT_BLOCK -> selectMappings.put(key, consumer);
+            case COMMAND -> commandMappings.put(key, consumer);
+            case ANY -> globalMappings.put(key, consumer);
+        }
+    }
+
+    public static void nmap(String key, BiConsumer<Window, TextBuffer> consumer) {
+        map(NAVIGATION, key, consumer);
+    }
+
+    public static void imap(String key, BiConsumer<Window, TextBuffer> consumer) {
+        map(INSERT, key, consumer);
+    }
+
+    public static void smap(String key, BiConsumer<Window, TextBuffer> consumer) {
+        map(SELECT, key, consumer);
+    }
+
+    public static void cmap(String key, BiConsumer<Window, TextBuffer> consumer) {
+        map(COMMAND, key, consumer);
+    }
+
+    public static void map(String key, BiConsumer<Window, TextBuffer> consumer) {
+        map(ANY, key, consumer);
+    }
+
+    private static void registerCommandMappings() {
+        cmap("ESC", (_, _) -> {
+            CommandHandler.clearCommandBuffer();
+            switchMode(NAVIGATION);
+        });
+        cmap("RET", (_, _) -> {
+            switchMode(NAVIGATION);
+            CommandHandler.executeCommand(CommandHandler.getBuffer());
+            CommandHandler.clearCommandBuffer();
+        });
+        cmap("BACKSPACE", (_, _) -> {
+            int length = CommandHandler.getBuffer().length() - 1;
+            if (length >= 0) {
+                CommandHandler.getBuilderBuffer().deleteCharAt(length);
+            }
+        });
+        cmap("Ctrl-v", (w, b) -> {
+            CommandHandler.getBuilderBuffer().append(ClipboardManager.getClipboardContent(ClipboardType.SYSTEM));
+        });
+    }
+
+    private static void registerNormalMappings() {
+        nmap("i", (_, _) -> switchMode(INSERT));
+        nmap("I", (_, b) -> {
+            b.moveToFirstNonWhitespaceChar();
+            switchMode(INSERT);
+        });
+        nmap("a", (w, b) -> {
+            b.moveCursorRight(w.getVisibleLines());
+            switchMode(INSERT);
+        });
+        nmap("A", (_, b) -> {
+            b.moveToLastNonWhitespaceChar();
+            switchMode(INSERT);
+        });
+        nmap("v", (_, b) -> {
+            startVisualX = b.cursorX;
+            startVisualY = b.cursorY;
+            System.out.println(startVisualX + " " + startVisualY);
+            switchMode(SELECT);
+        });
+        nmap("V", (_, _) -> switchMode(SELECT_LINE));
+        nmap("Shift-:", (_, _) -> switchMode(COMMAND));
+        nmap("o", (_, b) -> {
+            b.newLineDown();
+            switchMode(INSERT);
+        });
+        nmap("O", (_, b) -> {
+            b.newLineUp();
+            switchMode(INSERT);
+        });
+        nmap("dd", (_, b) -> b.deleteCurrentLine());
+        nmap("h", (w, b) -> b.moveCursorLeft(w.getVisibleLines()));
+        nmap("j", (w, b) -> b.moveCursorDown(w.getVisibleLines()));
+        nmap("k", (w, b) -> b.moveCursorUp(w.getVisibleLines()));
+        nmap("l", (w, b) -> b.moveCursorRight(w.getVisibleLines()));
+        nmap("w", (_, b) -> b.moveNextWord());
+        nmap("b", (_, b) -> b.movePreviousWord());
+        nmap("$", (_, b) -> b.gotoPosition(b.getCurrentLine().length() - 1, b.cursorY));
+
+        nmap("Ctrl-u", (w, b) -> b.moveCursorHalfUp(w.getVisibleLines()));
+        nmap("Ctrl-d", (w, b) -> b.moveCursorHalfDown(w.getVisibleLines()));
+        nmap("p", (_, b) -> b.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL)));
+        nmap("Ctrl-p", (w, _) -> {
+            if (w.getComponent() != null) {
+                ((FZFComponent) w.getComponent()).prev();
+            }
+        });
+        nmap("Ctrl-n", (w, _) -> {
+            if (w.getComponent() != null) {
+                ((FZFComponent) w.getComponent()).next();
+            }
+        });
+        nmap("Alt-H", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                tiledWindow.moveLeft();
+            }
+        });
+
+        nmap("Alt-L", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                tiledWindow.moveRight();
+            }
+        });
+
+        nmap("Alt-J", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                tiledWindow.moveDown();
+            }
+        });
+
+        nmap("Alt-K", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                tiledWindow.moveUp();
+            }
+        });
+
+        nmap("RET", (w, b) -> {
+            if (w != null && w.isVisible()) {
+                String result = ((FZFComponent) w).select();
+                CommandHandler.executeCommand("edit " + result);
+            }
+        });
+
+        // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actualy ded cant have specific buffers binding
+        nmap("gd", (w, b) -> {
+            List<Location> definitions = LSPManager.getDefinitions(b.file.getAbsolutePath(), b.cursorY, b.cursorX);
+            if (definitions.size() == 1) {
+                Location location = definitions.getFirst();
+                CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
+                int x = location.getRange().getStart().getCharacter();
+                int y = location.getRange().getStart().getLine();
+                SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
+            } else {
+                // show options in the floating window for selecting the denition
+            }
+        });
+
+    }
+
+    private static void registerSelectMappings() {
+        smap("ESC", (_, _) -> switchMode(NAVIGATION));
+        smap("h", (w, b) -> b.moveCursorLeft(w.getVisibleLines()));
+        smap("j", (w, b) -> b.moveCursorDown(w.getVisibleLines()));
+        smap("k", (w, b) -> b.moveCursorUp(w.getVisibleLines()));
+        smap("l", (w, b) -> b.moveCursorRight(w.getVisibleLines()));
+        smap("y", (w, b) -> {
+            String region = b.getRegion(startVisualX, startVisualY, b.cursorX, b.cursorY);
+            ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
+            switchMode(NAVIGATION);
+        });
+        smap("d", (w, b) -> {
+            String region = b.getRegion(startVisualX, startVisualY, b.cursorX, b.cursorY);
+            ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
+            b.deleteRegion(startVisualX, startVisualY, b.cursorX, b.cursorY);
+            switchMode(NAVIGATION);
+        });
+    }
+
+    private static void registerInsertMappings() {
+        imap("TAB", (w, b) -> b.insertTextAtCursor("    "));
+        imap("Ctrl-p", (w, b) -> {
+            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                SkiaRenderer.autoCompleteWindow.moveSelection(-1);
+            } else if (w != null && w.isVisible()) {
+                ((FZFComponent) w).prev();
+            }
+        });
+        imap("Ctrl-n", (w, b) -> {
+            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                SkiaRenderer.autoCompleteWindow.moveSelection(1);
+            } else if (w != null && w.isVisible()) {
+                ((FZFComponent) w).next();
+            }
+        });
+
+        imap("ESC", (_, _) -> {
+            SkiaRenderer.autoCompleteWindow.hide();
+            switchMode(NAVIGATION);
+        });
+        imap("RET", (_, b) -> {
+            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
+                CompletionItem selectedItem = SkiaRenderer.autoCompleteWindow.select();
+                if (selectedItem != null) {
+                    Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
+                    if (eitherTextEdit.getLeft() != null) {
+                        TextEdit edit = eitherTextEdit.getLeft();
+                        b.replaceTextInRange(edit.getRange(), edit.getNewText());
+                        if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
+                            b.insertTextAtCursor("()");
+                            b.cursorX += 2;
+                        }
+                    } else {
+                        // TODO: insert text at cursor
+                    }
+                }
+            } else {
+                b.smartNewLine();
+            }
+        });
+        imap("BACKSPACE", (w, b) -> {
+            b.removeChar();
+            SkiaRenderer.autoCompleteWindow.hide();
+        });
+
+        imap("Ctrl-v", (w, b) -> {
+            b.insertTextAtCursor(ClipboardManager.getClipboardContent(ClipboardType.SYSTEM));
+        });
+    }
+
+    public static void switchMode(TextInteractionMode mode) {
+        if (Deditor.getBufferMode() == mode) {
+            return;
+        }
+        if (mode == INSERT || mode == COMMAND) {
+            startTextInput();
+        } else if (mode == SELECT || mode == SELECT_LINE || mode == SELECT_BLOCK) {
+            stopTextInput();
+        } else {
+            stopTextInput();
+        }
+
+        Deditor.setBufferMode(mode);
+    }
 
     @Override
     public void handle(SDL_Event e) {
-        TextInteractionMode mode = Deditor.getBufferMode();
         int keyCode = e.key().key();
         short mod = e.key().mod();
         int keyChar = SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
+        String keyPressed = getKeyCombination(mod, keyCode, (char) keyChar);
+        System.out.println("keyPressed: " + keyPressed);
 
-        if (mode == NAVIGATION) {
-            handleNavigation((char) keyChar, keyCode, mod);
-        } else if (mode == INSERT) {
-            handleInsert((char) keyChar, keyCode, mod);
-        } else if (mode == SELECT) {
-            handleSelect((char) keyChar, keyCode, mod);
-        } else if (mode == COMMAND) {
-            handleCommand((char) keyChar, keyCode, mod);
-        }
+        handleModeSpecificMapping(keyPressed);
+
         lastKeyPressTime = System.currentTimeMillis();
     }
 
+    public void handleModeSpecificMapping(String pressed) {
+        long currentTime = System.currentTimeMillis();
+
+        if (currentTime - lastKeyPressTime > SEQUENCE_TIMEOUT) {
+            keySequence.setLength(0);
+        }
+
+        keySequence.append(pressed);
+        lastKeyPressTime = currentTime;
+
+        TextInteractionMode mode = Deditor.getBufferMode();
+        if (mode == NAVIGATION) {
+            handleKey(pressed, navigationMappings);
+        } else if (mode == INSERT) {
+            handleKey(pressed, insertMappings);
+        } else if (mode == SELECT || mode == SELECT_LINE || mode == SELECT_BLOCK) {
+            handleKey(pressed, selectMappings);
+        } else if (mode == COMMAND) {
+            handleKey(pressed, commandMappings);
+        }
+
+        handleKey(pressed, globalMappings);
+    }
+
+    public void handleKey(String keyPressed, Map<String, BiConsumer<Window, TextBuffer>> map) {
+        String key = keyPressed;
+        if (map.containsKey(keySequence.toString())) {
+            System.out.println(keySequence.toString());
+            key = keySequence.toString();
+        }
+        var biConsumer = map.getOrDefault(key, null);
+
+        if (biConsumer != null) {
+            Window window = SkiaRenderer.currentWindow;
+            TextBuffer buffer = null;
+            if (window.getComponent() instanceof TextComponent textComponent) {
+                buffer = textComponent.getBuffer();
+            }
+            biConsumer.accept(window, buffer);
+        }
+
+    }
+
+    public String getKeyCombination(short mod, int keyCode, char keyChar) {
+        if (keyCode == SDLK_ESCAPE) {
+            return "ESC";
+        } else if (keyCode == SDLK_RETURN) {
+            return "RET";
+        } else if (keyCode == SDLK_BACKSPACE) {
+            return "BACKSPACE";
+        } else if (keyCode == SDLK_TAB) {
+            return "TAB";
+        } else if ((mod & SDL_KMOD_CTRL) != 0) {
+            return "Ctrl-" + keyChar;
+        } else if ((mod & SDL_KMOD_SHIFT) != 0) {
+            if (Character.isUpperCase(keyChar)) {
+                return String.valueOf(keyChar);
+            } else {
+                return "Shift-" + keyChar;
+            }
+        } else if ((mod & SDL_KMOD_ALT) != 0) {
+            return "Alt-" + keyChar;
+        } else {
+            return String.valueOf(keyChar);
+        }
+    }
 
     @Override
     public void handleInput(SDL_Event event) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
         TextInteractionMode mode = Deditor.getBufferMode();
-        if (mode == INSERT) {
+        if (mode == INSERT && SkiaRenderer.currentWindow.getComponent() instanceof TextComponent textComponent) {
+            TextBuffer buffer = textComponent.getBuffer();
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
@@ -74,261 +387,12 @@ public class GlobalKeyHandler implements IKeyHandler {
         }
     }
 
-    public void stopTextInput() {
+    public static void stopTextInput() {
         SDLKeyboard.SDL_StopTextInput(Engine.getWindow());
     }
 
-    public void startTextInput() {
+    public static void startTextInput() {
         SDLKeyboard.SDL_StartTextInput(Engine.getWindow());
     }
 
-    public void handleInsert(char keyChar, int keyCode, short mod) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
-        switch (keyCode) {
-            case SDLK_ESCAPE -> {
-                stopTextInput();
-                Deditor.setBufferMode(NAVIGATION);
-                SkiaRenderer.autoCompleteWindow.hide();
-            }
-            case SDLK_RETURN -> {
-                if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                    CompletionItem selectedItem = SkiaRenderer.autoCompleteWindow.select();
-                    if (selectedItem != null) {
-                        Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
-                        if (eitherTextEdit.getLeft() != null) {
-                            TextEdit edit = eitherTextEdit.getLeft();
-                            buffer.replaceTextInRange(edit.getRange(), edit.getNewText());
-                            if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
-                                buffer.insertTextAtCursor("()");
-                                buffer.cursorX += 2;
-                            }
-                        } else {
-                            // TODO: insert text at cursor
-                        }
-                    }
-                } else {
-                    buffer.smartNewLine();
-                }
-            }
-            case SDLK_BACKSPACE -> {
-                buffer.removeChar();
-                SkiaRenderer.autoCompleteWindow.hide();
-            }
-            case SDLK_DELETE -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    System.out.println("removing word");
-                    buffer.removeWordAfterCursor();
-                } else {
-                    buffer.removeCharAfterCursor();
-                }
-            }
-            case SDLK_TAB -> {
-                for (int i = 0; i < 4; i++) {
-                    buffer.appendChar(' ');
-                }
-            }
-            case SDLK_V -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    buffer.insertTextAtCursor(ClipboardManager.getClipboardContent(ClipboardType.SYSTEM));
-                }
-            }
-            case SDLK_P -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                        SkiaRenderer.autoCompleteWindow.moveSelection(-1);
-                    } else if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                        ((FZFComponent) SkiaRenderer.floatingWindow).prev();
-                    }
-                }
-            }
-            case SDLK_N -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                        SkiaRenderer.autoCompleteWindow.moveSelection(1);
-                    } else if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                        ((FZFComponent) SkiaRenderer.floatingWindow).next();
-                    }
-                }
-            }
-        }
-    }
-
-    public static int startVisualX, startVisualY;
-
-    public void handleSelect(char keyChar, int keyCode, short mod) {
-        Window window = SkiaRenderer.currentWindow;
-        TextBuffer buffer = SkiaRenderer.getCurrentTextBuffer();
-        int visibleLines = (int) (window.height / FontManager.getLineHeight());
-        if (keyCode == SDLK_ESCAPE) {
-            Deditor.setBufferMode(NAVIGATION);
-            return;
-        }
-        switch (keyChar) {
-            case 'h' -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY, visibleLines);
-            case 'j' -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY, visibleLines);
-            case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY, visibleLines);
-            case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
-            case 'y' -> {
-                String region = buffer.getRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
-                ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
-                Deditor.setBufferMode(NAVIGATION);
-            }
-            case 'd' -> {
-                String region = buffer.getRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
-                ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
-                buffer.deleteRegion(startVisualX, startVisualY, buffer.cursorX, buffer.cursorY);
-                Deditor.setBufferMode(NAVIGATION);
-            }
-        }
-    }
-
-    public void handleCommand(char keyChar, int keyCode, short mod) {
-        switch (keyCode) {
-            case SDLK_ESCAPE -> {
-                stopTextInput();
-                CommandHandler.clearCommandBuffer();
-                Deditor.setBufferMode(NAVIGATION);
-            }
-            case SDLK_RETURN -> {
-                stopTextInput();
-                CommandHandler.executeCommand(CommandHandler.getBuffer());
-                CommandHandler.clearCommandBuffer();
-                Deditor.setBufferMode(NAVIGATION);
-            }
-            case SDLK_BACKSPACE -> {
-                int length = CommandHandler.getBuffer().length() - 1;
-                if (length >= 0) {
-                    CommandHandler.getBuilderBuffer().deleteCharAt(length);
-                }
-            }
-
-            case SDLK_V -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    String clipboard = SDLClipboard.SDL_GetClipboardText();
-                    CommandHandler.getBuilderBuffer().append(clipboard);
-                }
-            }
-        }
-    }
-
-    public void handleNavigation(int keyChar, int keyCode, short mod) {
-        Window window = SkiaRenderer.currentWindow;
-        TextComponent component = (TextComponent) window.component;
-        TextBuffer buffer = component.getBuffer();
-        int visibleLines = (int) (window.height / FontManager.getLineHeight());
-
-        switch (keyChar) {
-            case 'u' -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    buffer.moveCursor(buffer.cursorX, buffer.cursorY - visibleLines / 2, visibleLines);
-                }
-            }
-            case 'i' -> {
-                startTextInput();
-                Deditor.setBufferMode(INSERT);
-            }
-            case 'v' -> {
-                startVisualX = buffer.cursorX;
-                startVisualY = buffer.cursorY;
-                Deditor.setBufferMode(SELECT);
-            }
-            case 'V' -> {
-                startVisualX = 0;
-                startVisualY = buffer.cursorY;
-                Deditor.setBufferMode(SELECT);
-            }
-            case 'p' -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                        ((FZFComponent) SkiaRenderer.floatingWindow).prev();
-                    }
-                } else {
-                    buffer.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL));
-                }
-            }
-            case 'n' -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                        ((FZFComponent) SkiaRenderer.floatingWindow).next();
-                    }
-                }
-            }
-            case 'o' -> {
-                startTextInput();
-                buffer.newLineDown();
-                Deditor.setBufferMode(INSERT);
-            }
-            case 'O' -> {
-                startTextInput();
-                buffer.newLineUp();
-                Deditor.setBufferMode(INSERT);
-            }
-            case 'd' -> {
-                if ((mod & SDL_KMOD_CTRL) != 0) {
-                    buffer.moveCursor(buffer.cursorX, buffer.cursorY + visibleLines / 2, visibleLines);
-                } else if (lastKey == 'd') {
-                    buffer.deleteCurrentLine();
-                } else if (lastKey == 'g') {
-                    List<Location> definitions = LSPManager.getDefinitions(buffer.file.getAbsolutePath(), buffer.cursorY, buffer.cursorX);
-                    if (definitions.size() == 1) {
-                        Location location = definitions.getFirst();
-                        CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
-                        int x = location.getRange().getStart().getCharacter();
-                        int y = location.getRange().getStart().getLine();
-                        SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
-                    } else {
-                        // show options in the floating window for selecting the denition
-                    }
-                }
-            }
-            case ':' -> {
-                startTextInput();
-                Deditor.setBufferMode(COMMAND);
-            }
-            case 'h' -> buffer.moveCursor(--buffer.cursorX, buffer.cursorY, visibleLines);
-            case 'j' -> buffer.moveCursor(buffer.cursorX, ++buffer.cursorY, visibleLines);
-            case 'k' -> buffer.moveCursor(buffer.cursorX, --buffer.cursorY, visibleLines);
-            case 'l' -> buffer.moveCursor(++buffer.cursorX, buffer.cursorY, visibleLines);
-            case 'w' -> buffer.moveNextWord();
-            case 'b' -> buffer.movePreviousWord();
-            case '$' -> buffer.gotoPosition(buffer.getCurrentLine().length() - 1, buffer.cursorY);
-            case 'A' -> {
-                buffer.gotoPosition(buffer.getCurrentLine().length(), buffer.cursorY);
-                startTextInput();
-                Deditor.setBufferMode(INSERT);
-            }
-            case 'I' -> {
-                char c = buffer.getCurrentLine().toString().trim().charAt(0);
-                int index = buffer.getCurrentLine().indexOf(c + "");
-                buffer.gotoPosition(index, buffer.cursorY);
-                startTextInput();
-                Deditor.setBufferMode(INSERT);
-            }
-            // Window Movement (ALT + H/J/K/L)
-            case 'H', 'J', 'K', 'L' -> {
-                if (window instanceof TiledWindow tiledWindow) {
-                    if ((mod & SDL_KMOD_ALT) != 0) {
-                        switch (keyChar) {
-                            case 'H' -> tiledWindow.moveLeft();
-                            case 'L' -> tiledWindow.moveRight();
-                            case 'J' -> tiledWindow.moveDown();
-                            case 'K' -> tiledWindow.moveUp();
-                        }
-                    }
-                }
-            }
-        }
-
-        switch (keyCode) {
-            case SDLK_RETURN -> {
-                if (SkiaRenderer.floatingWindow != null && SkiaRenderer.floatingWindow.isVisible()) {
-                    String result = ((FZFComponent) SkiaRenderer.floatingWindow).select();
-                    CommandHandler.executeCommand("edit " + result);
-                }
-            }
-        }
-
-
-        lastKey = keyChar;
-    }
 }
