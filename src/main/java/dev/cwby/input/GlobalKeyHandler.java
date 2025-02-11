@@ -248,7 +248,6 @@ public class GlobalKeyHandler implements IKeyHandler {
                         b.replaceTextInRange(edit.getRange(), edit.getNewText());
                         if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
                             b.insertTextAtCursor("()");
-                            b.cursorX += 2;
                         }
                     } else {
                         // TODO: insert text at cursor
