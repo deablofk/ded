@@ -79,7 +79,6 @@ public class GlobalKeyHandler implements IKeyHandler {
         KeybindingTrie.nmap("v", (_, b) -> {
             startVisualX = b.cursorX;
             startVisualY = b.cursorY;
-            System.out.println(startVisualX + " " + startVisualY);
             switchMode(SELECT);
         });
         KeybindingTrie.nmap("V", (_, _) -> switchMode(SELECT_LINE));
@@ -139,14 +138,9 @@ public class GlobalKeyHandler implements IKeyHandler {
             }
         });
 
-        KeybindingTrie.nmap("RET", (w, b) -> {
-            if (w != null && w.isVisible()) {
-                String result = ((FZFComponent) w).select();
-                CommandHandler.executeCommand("edit " + result);
-            }
-        });
+        KeybindingTrie.nmap("RET", (w, _) -> w.onTrigger());
 
-        // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actualy ded cant have specific buffers binding
+        // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
         KeybindingTrie.nmap("g d", (w, b) -> {
             List<Location> definitions = LSPManager.getDefinitions(b.file.getAbsolutePath(), b.cursorY, b.cursorX);
             if (definitions.size() == 1) {
@@ -185,27 +179,29 @@ public class GlobalKeyHandler implements IKeyHandler {
     private static void registerInsertMappings() {
         KeybindingTrie.imap("TAB", (w, b) -> b.insertTextAtCursor("    "));
         KeybindingTrie.imap("CTRL-p", (w, b) -> {
-            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                SkiaRenderer.autoCompleteWindow.moveSelection(-1);
+
+            if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
+                SkiaRenderer.WM.getAutoCompleteWindow().moveSelection(-1);
             } else if (w != null && w.isVisible()) {
                 ((FZFComponent) w).prev();
             }
         });
         KeybindingTrie.imap("CTRL-n", (w, b) -> {
-            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                SkiaRenderer.autoCompleteWindow.moveSelection(1);
+            if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
+                SkiaRenderer.WM.getAutoCompleteWindow().moveSelection(-1);
             } else if (w != null && w.isVisible()) {
                 ((FZFComponent) w).next();
             }
         });
 
         KeybindingTrie.imap("ESC", (_, _) -> {
-            SkiaRenderer.autoCompleteWindow.hide();
+            SkiaRenderer.WM.getAutoCompleteWindow().hide();
             switchMode(NAVIGATION);
         });
         KeybindingTrie.imap("RET", (_, b) -> {
-            if (SkiaRenderer.autoCompleteWindow.isVisible()) {
-                CompletionItem selectedItem = SkiaRenderer.autoCompleteWindow.select();
+            var cmpWindow = SkiaRenderer.WM.getAutoCompleteWindow();
+            if (cmpWindow.isVisible()) {
+                CompletionItem selectedItem = cmpWindow.select();
                 if (selectedItem != null) {
                     Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
                     if (eitherTextEdit.getLeft() != null) {
@@ -224,7 +220,7 @@ public class GlobalKeyHandler implements IKeyHandler {
         });
         KeybindingTrie.imap("BACKSPACE", (w, b) -> {
             b.removeChar();
-            SkiaRenderer.autoCompleteWindow.hide();
+            SkiaRenderer.WM.getAutoCompleteWindow().hide();
         });
 
         KeybindingTrie.imap("CTRL-v", (w, b) -> {
@@ -255,16 +251,13 @@ public class GlobalKeyHandler implements IKeyHandler {
         short mod = e.key().mod();
         int keyChar = SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
         String keyPressed = getKey(mod, keyCode, (char) keyChar);
-        System.out.println(keyPressed);
 
         root = root.search(keyPressed);
-
-        System.out.println(root);
 
         if (root == null) {
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
         } else if (root.action != null) {
-            Window window = SkiaRenderer.currentWindow;
+            Window window = SkiaRenderer.WM.getCurrentWindow();
             TextBuffer buffer = null;
             if (window.getComponent() instanceof TextComponent textComponent) {
                 buffer = textComponent.getBuffer();
@@ -303,21 +296,21 @@ public class GlobalKeyHandler implements IKeyHandler {
     @Override
     public void handleInput(SDL_Event event) {
         TextInteractionMode mode = Deditor.getBufferMode();
-        if (mode == INSERT && SkiaRenderer.currentWindow.getComponent() instanceof TextComponent textComponent) {
+        if (mode == INSERT && SkiaRenderer.WM.getCurrentWindow().getComponent() instanceof TextComponent textComponent) {
             TextBuffer buffer = textComponent.getBuffer();
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
             if (c == '.' || Character.isLetterOrDigit(c)) {
-                float windowX = SkiaRenderer.currentWindow.x;
-                float windowY = SkiaRenderer.currentWindow.y;
+                float windowX = SkiaRenderer.WM.getCurrentWindow().x;
+                float windowY = SkiaRenderer.WM.getCurrentWindow().y;
 
                 LSPManager.sendDidChangeNotification(buffer);
                 List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
-                SkiaRenderer.autoCompleteWindow.setSuggestions(suggestions);
-                SkiaRenderer.autoCompleteWindow.show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
+                SkiaRenderer.WM.getAutoCompleteWindow().setSuggestions(suggestions);
+                SkiaRenderer.WM.getAutoCompleteWindow().show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
             } else {
-                SkiaRenderer.autoCompleteWindow.hide();
+                SkiaRenderer.WM.getAutoCompleteWindow().hide();
             }
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));

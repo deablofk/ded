@@ -121,30 +121,30 @@ public class TiledWindow extends Window {
 
     public TiledWindow moveLeft() {
         TiledWindow neighbor = findNeighbor(0);
-        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
+        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveRight() {
         TiledWindow neighbor = findNeighbor(1);
-        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
+        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveUp() {
         TiledWindow neighbor = findNeighbor(2);
-        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
+        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveDown() {
         TiledWindow neighbor = findNeighbor(3);
-        if (neighbor != null) SkiaRenderer.currentWindow = neighbor;
+        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         if (this.father == null) {
             LSPManager.closeAllLsp();
             Engine.setShouldClose(true);
@@ -155,9 +155,9 @@ public class TiledWindow extends Window {
 
         if (sibling != null) {
             if (father.father == null) {
-                SkiaRenderer.rootNode = sibling;
+                SkiaRenderer.WM.setRootNode(sibling);
                 sibling.father = null;
-                SkiaRenderer.currentWindow = findLeaf(sibling);
+                SkiaRenderer.WM.setCurrentWindow(findLeaf(sibling));
             } else {
                 sibling.father = father.father;
 
@@ -167,7 +167,7 @@ public class TiledWindow extends Window {
                     father.father.rightChild = sibling;
                 }
 
-                SkiaRenderer.currentWindow = findLeaf(sibling);
+                SkiaRenderer.WM.setCurrentWindow(findLeaf(sibling));
             }
 
             sibling.updateSize(father.x, father.y, father.width, father.height);
@@ -181,10 +181,10 @@ public class TiledWindow extends Window {
             }
 
             if (father.father == null) {
-                SkiaRenderer.rootNode = null;
+                SkiaRenderer.WM.setRootNode(null);
             }
 
-            SkiaRenderer.currentWindow = father.father;
+            SkiaRenderer.WM.setCurrentWindow(father.father);
         }
     }
 }

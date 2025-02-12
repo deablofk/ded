@@ -24,6 +24,7 @@ public class AutoCompleteWindow extends FloatingWindow implements IComponent {
     public AutoCompleteWindow(float x, float y, float width, float height) {
         super(x, y, width, height);
         this.component = this;
+        visible = false;
     }
 
     public void setSuggestions(List<CompletionItem> suggestions) {

@@ -1,6 +1,8 @@
 package dev.cwby.graphics.layout;
 
 
+import dev.cwby.graphics.SkiaRenderer;
+
 public abstract class FloatingWindow extends Window {
 
     public FloatingWindow(float x, float y, float width, float height) {
@@ -13,4 +15,9 @@ public abstract class FloatingWindow extends Window {
         this.visible = true;
     }
 
+    @Override
+    public void close() {
+        SkiaRenderer.WM.closeFloatingWindow(this);
+        onClose();
+    }
 }

@@ -171,14 +171,17 @@ public class TextBuffer {
     }
 
     public void deleteCurrentLine() {
-        if (lines.isEmpty()) return; // If there are no lines, do nothing
+        if (lines.isEmpty()) {
+            return;
+        }
 
-        if (lines.size() == 1) {
-            getCurrentLine().setLength(0);
-            cursorX = 0;
+        if (lines.size() - 1 == cursorY) {
+            lines.remove(cursorY);
+            if (cursorY > 0) {
+                cursorY--;
+            }
         } else {
             lines.remove(cursorY);
-            if (cursorY > 0) cursorY--;
         }
     }
 

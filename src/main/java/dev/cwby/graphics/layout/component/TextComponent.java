@@ -90,7 +90,7 @@ public class TextComponent implements IComponent {
             cursorVisible = true;
         }
 
-        TextComponent textComponent = (TextComponent) SkiaRenderer.currentWindow.component;
+        TextComponent textComponent = (TextComponent) SkiaRenderer.WM.getCurrentWindow().component;
         if (textComponent != null && textComponent.getBuffer() != null) {
             TextBuffer buffer = textComponent.getBuffer();
             int cursorX = buffer.cursorX;
@@ -172,7 +172,7 @@ public class TextComponent implements IComponent {
         canvas.drawRect(rect, borderPaint);
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);
-            if (SkiaRenderer.currentWindow.component == this) {
+            if (SkiaRenderer.WM.getCurrentWindow().component == this) {
                 renderCursor(canvas, x, y);
                 renderSelection(canvas, x, y);
             }

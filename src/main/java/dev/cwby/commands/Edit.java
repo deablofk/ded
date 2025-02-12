@@ -12,7 +12,7 @@ public class Edit implements ICommand {
             System.out.println("Specify the File Path");
             return false;
         }
-        SkiaRenderer.currentWindow.component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
+        SkiaRenderer.WM.getCurrentWindow().component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
         return true;
     }
 

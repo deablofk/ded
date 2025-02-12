@@ -11,7 +11,7 @@ import java.nio.file.Files;
 public class Save implements ICommand {
     @Override
     public boolean run(String[] args) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.currentWindow.component).getBuffer();
+        TextBuffer buffer = ((TextComponent) SkiaRenderer.WM.getCurrentWindow().component).getBuffer();
 
         File file = buffer.file;
         if (file != null) {

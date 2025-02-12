@@ -6,7 +6,7 @@ public class Quit implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        SkiaRenderer.currentWindow.close();
+        SkiaRenderer.WM.getCurrentWindow().close();
         return true;
     }
 }

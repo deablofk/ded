@@ -10,7 +10,7 @@ public class VerticalSplit implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        Window window = SkiaRenderer.currentWindow;
+        Window window = SkiaRenderer.WM.getCurrentWindow();
         if (window instanceof TiledWindow tiledWindow) {
             tiledWindow.splitVertically();
             if (tiledWindow.component != null) {
@@ -21,7 +21,7 @@ public class VerticalSplit implements ICommand {
                 tiledWindow.leftChild.component = component;
                 tiledWindow.rightChild.component = component;
             }
-            SkiaRenderer.currentWindow = tiledWindow.rightChild;
+            SkiaRenderer.WM.setCurrentWindow(tiledWindow.rightChild);
         }
         return true;
     }

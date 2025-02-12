@@ -28,9 +28,13 @@ public class KeybindingTrie {
         String[] keys = keybinding.split(" ");
 
         for (String key : keys) {
-            var newNode = new TrieNode();
-            currentNode.children.put(key, newNode);
-            currentNode = newNode;
+            if (currentNode.children.containsKey(key)) {
+                currentNode = currentNode.children.get(key);
+            } else {
+                var newNode = new TrieNode();
+                currentNode.children.put(key, newNode);
+                currentNode = newNode;
+            }
         }
 
         currentNode.action = action;

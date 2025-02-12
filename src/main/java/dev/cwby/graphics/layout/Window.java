@@ -8,7 +8,7 @@ public class Window {
     public float x, y, width, height;
     public String title;
     public IComponent component;
-    public boolean visible = false;
+    public boolean visible = true;
 
     public Window(String title, float x, float y, float width, float height) {
         this.x = x;
@@ -23,6 +23,15 @@ public class Window {
     }
 
     public void close() {
+        onClose();
+    }
+
+    public void onTrigger() {
+
+    }
+
+    public void onClose() {
+
     }
 
     public void hide() {

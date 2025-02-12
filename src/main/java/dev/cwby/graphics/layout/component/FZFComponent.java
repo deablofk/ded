@@ -1,7 +1,9 @@
 package dev.cwby.graphics.layout.component;
 
+import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.graphics.FontManager;
+import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.FloatingWindow;
 import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Paint;
@@ -78,14 +80,17 @@ public class FZFComponent extends FloatingWindow implements IComponent {
         float lineHeight = FontManager.getLineHeight();
         for (int i = 0; i < results.size(); i++) {
             String result = results.get(i);
-            if (index == i) {
-                canvas.drawString(result, x + 10, y + lineHeight + (i * lineHeight), FontManager.getDefaultFont(), selectedPaint);
-            } else {
-                canvas.drawString(result, x + 10, y + lineHeight + (i * lineHeight), FontManager.getDefaultFont(), paint);
-            }
+            Paint p = index == i ? selectedPaint : paint;
+            canvas.drawString(result, x + 10, y + lineHeight + (i * lineHeight), FontManager.getDefaultFont(), p);
         }
 
         canvas.restore();
+    }
+
+    @Override
+    public void onTrigger() {
+        close();
+        CommandHandler.executeCommand("edit " + select());
     }
 
     // return a path to a file
