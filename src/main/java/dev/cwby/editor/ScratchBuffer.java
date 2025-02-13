@@ -56,6 +56,9 @@ public class ScratchBuffer {
     }
 
     public void pasteText(String text) {
+        if (text == null) {
+            return;
+        }
         StringBuilder builder = getCurrentLine();
         String[] parts = text.split("\n", -1);
 
@@ -344,5 +347,43 @@ public class ScratchBuffer {
 
     public String getFilepath() {
         return filepath;
+    }
+
+    public List<int[]> searchWordUnderCursor() {
+        List<int[]> positions = new ArrayList<>();
+        StringBuilder currentLine = getCurrentLine();
+        if (cursorX >= currentLine.length()) {
+            return positions;
+        }
+
+        int start = cursorX;
+        while (start > 0 && Character.isLetterOrDigit(currentLine.charAt(start - 1))) {
+            start--;
+        }
+
+        int end = cursorX;
+        while (end < currentLine.length() && Character.isLetterOrDigit(currentLine.charAt(end))) {
+            end++;
+        }
+
+        if (start < end) {
+            String word = currentLine.substring(start, end);
+            positions = searchWord(word);
+        }
+
+        return positions;
+    }
+
+    public List<int[]> searchWord(String word) {
+        List<int[]> positions = new ArrayList<>();
+        for (int y = 0; y < lines.size(); y++) {
+            String line = lines.get(y).toString();
+            int x = line.indexOf(word);
+            while (x != -1) {
+                positions.add(new int[]{y, x});
+                x = line.indexOf(word, x + 1);
+            }
+        }
+        return positions;
     }
 }

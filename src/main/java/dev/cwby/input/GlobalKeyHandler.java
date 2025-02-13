@@ -102,6 +102,7 @@ public class GlobalKeyHandler implements IKeyHandler {
         KeybindingTrie.nmap("w", (_, b) -> b.moveNextWord());
         KeybindingTrie.nmap("b", (_, b) -> b.movePreviousWord());
         KeybindingTrie.nmap("$", (_, b) -> b.gotoPosition(b.getCurrentLine().length() - 1, b.cursorY));
+        KeybindingTrie.nmap("SHIFT-#", (_, b) -> b.searchWordUnderCursor());
 
         KeybindingTrie.nmap("CTRL-u", (w, b) -> b.moveCursorHalfUp());
         KeybindingTrie.nmap("CTRL-d", (w, b) -> b.moveCursorHalfDown());

@@ -23,6 +23,7 @@ public class CommandHandler {
         COMMANDS.put("vs", new VerticalSplit());
         COMMANDS.put("s", new Split());
         COMMANDS.put("fzf", new ToggleFZF());
+        COMMANDS.put("explorer", new Explorer());
     }
 
     public static void setCommand(String command, ICommand mode) {
