@@ -13,7 +13,7 @@ public class ToggleFZF implements ICommand {
             String query = args[1];
             fzfComponent.search(query);
         }
-
+        fzfComponent.visible = true;
         SkiaRenderer.WM.openFloatingWindow(fzfComponent);
         return true;
     }

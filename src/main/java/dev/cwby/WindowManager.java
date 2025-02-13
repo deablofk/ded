@@ -47,10 +47,15 @@ public class WindowManager {
     }
 
     public void setCurrentWindow(Window currentWindow) {
+        if (currentWindow instanceof TiledWindow tiledWindow) {
+            this.currentTiledWindow = tiledWindow;
+        }
+
         this.currentWindow = currentWindow;
     }
 
     public void openFloatingWindow(FloatingWindow window) {
+        window.visible = true;
         if (currentWindow instanceof TiledWindow tiled) {
             currentTiledWindow = tiled;
         }
@@ -59,6 +64,7 @@ public class WindowManager {
     }
 
     public void closeFloatingWindow(FloatingWindow window) {
+        window.visible = false;
         floatingWindows.remove(window);
         if (floatingWindows.isEmpty()) {
             currentWindow = currentTiledWindow;
