@@ -3,7 +3,7 @@ package dev.cwby.graphics;
 import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.WindowManager;
-import dev.cwby.editor.TextBuffer;
+import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.Window;
@@ -81,11 +81,11 @@ public class SkiaRenderer implements IRender {
     }
 
     public void renderAutoCompleteWindow(Canvas canvas) {
-        if (WM.getAutoCompleteWindow().isVisible() && WM.getCurrentWindow().component instanceof TextComponent textComponent) {
-            System.out.println("Auto complete window is visible and componetn is text component");
-            var buffer = textComponent.getBuffer();
-            WM.getAutoCompleteWindow().render(canvas, buffer.cursorX, buffer.cursorY, WM.getRootNode().width, WM.getRootNode().height);
+        var cmpWindow = WM.getAutoCompleteWindow();
+        if (!cmpWindow.isVisible()) {
+            return;
         }
+        cmpWindow.getComponent().render(canvas, cmpWindow.x, cmpWindow.y, cmpWindow.width, cmpWindow.height);
     }
 
     public void renderFloatingWindows() {
@@ -96,12 +96,12 @@ public class SkiaRenderer implements IRender {
 
         for (Window window : windows) {
             if (window.isVisible()) {
-                window.component.render(canvas, 0, 0, WM.getRootNode().width, WM.getRootNode().height);
+                window.component.render(canvas, window.x, window.y, window.width, window.height);
             }
         }
     }
 
-    public static TextBuffer getCurrentTextBuffer() {
+    public static ScratchBuffer getCurrentTextBuffer() {
         return ((TextComponent) WM.getCurrentWindow().component).getBuffer();
     }
 }

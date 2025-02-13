@@ -1,6 +1,7 @@
 package dev.cwby;
 
 import dev.cwby.editor.FileChunkLoader;
+import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.lsp.LSPManager;
 
@@ -13,7 +14,7 @@ public class BufferManager {
     public static Map<String, TextBuffer> buffers = new HashMap<>();
     public static boolean shouldOpenEmptyBuffer = true;
 
-    public static TextBuffer getBuffer(String absolutePath) {
+    public static ScratchBuffer getBuffer(String absolutePath) {
         return buffers.get(absolutePath);
     }
 
@@ -30,7 +31,6 @@ public class BufferManager {
             if (buffers.containsKey(file.getAbsolutePath())) {
                 return buffers.get(file.getAbsolutePath());
             }
-            System.out.println(file.getAbsolutePath());
             TextBuffer textBuffer = new TextBuffer(new FileChunkLoader(file, 64 * 1024));
             LSPManager.initializeServer(file.getAbsolutePath(), textBuffer);
             buffers.put(file.getAbsolutePath(), textBuffer);
