@@ -1,7 +1,6 @@
 package dev.cwby;
 
 import dev.cwby.commands.*;
-import dev.cwby.graphics.layout.component.FZFComponent;
 
 import java.util.HashMap;
 import java.util.Map;

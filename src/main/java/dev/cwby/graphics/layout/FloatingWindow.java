@@ -15,6 +15,14 @@ public abstract class FloatingWindow extends Window {
         this.visible = true;
     }
 
+    public void show(float x, float y, float width, float height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.visible = true;
+    }
+
     @Override
     public void close() {
         SkiaRenderer.WM.closeFloatingWindow(this);

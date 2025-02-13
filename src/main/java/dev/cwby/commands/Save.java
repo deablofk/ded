@@ -11,17 +11,19 @@ import java.nio.file.Files;
 public class Save implements ICommand {
     @Override
     public boolean run(String[] args) {
-        TextBuffer buffer = ((TextComponent) SkiaRenderer.WM.getCurrentWindow().component).getBuffer();
+        var buffer = ((TextComponent) SkiaRenderer.WM.getCurrentWindow().component).getBuffer();
 
-        File file = buffer.file;
-        if (file != null) {
-            try {
-                Files.write(file.toPath(), buffer.getLines());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        if (buffer instanceof TextBuffer textBuffer) {
+            File file = textBuffer.file;
+            if (file != null) {
+                try {
+                    Files.write(file.toPath(), buffer.getLines());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            return true;
         }
+
         return true;
     }
 }

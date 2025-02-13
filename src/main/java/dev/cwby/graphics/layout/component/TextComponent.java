@@ -2,6 +2,7 @@ package dev.cwby.graphics.layout.component;
 
 import dev.cwby.Deditor;
 import dev.cwby.config.ConfigurationParser;
+import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.FontManager;
@@ -25,16 +26,16 @@ public class TextComponent implements IComponent {
     private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color));
     private static final Paint selectColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.select));
 
-    private TextBuffer buffer;
+    private ScratchBuffer buffer;
     private boolean cursorVisible = true;
     private long lastBlinkTime = 0;
 
-    public TextComponent setBuffer(TextBuffer buffer) {
+    public TextComponent setBuffer(ScratchBuffer buffer) {
         this.buffer = buffer;
         return this;
     }
 
-    public TextBuffer getBuffer() {
+    public ScratchBuffer getBuffer() {
         return buffer;
     }
 
@@ -68,6 +69,13 @@ public class TextComponent implements IComponent {
         }
     }
 
+    Paint lineBackgroundPaint = new Paint().setColor(0x66666666);
+
+    public void drawCurrentLineBackground(Canvas canvas, float x, float y, float width, float lineHeight) {
+        float currentLineY = (buffer.cursorY - buffer.offsetY) * lineHeight;
+        canvas.drawRect(Rect.makeXYWH(x, y + currentLineY, width, lineHeight), lineBackgroundPaint);
+    }
+
     public void renderText(Canvas canvas, float x, float y, float width, float height, int offsetY) {
         float lineHeight = FontManager.getLineHeight();
         for (int i = offsetY, count = 0; i < buffer.lines.size(); i++, count++) {
@@ -92,7 +100,7 @@ public class TextComponent implements IComponent {
 
         TextComponent textComponent = (TextComponent) SkiaRenderer.WM.getCurrentWindow().component;
         if (textComponent != null && textComponent.getBuffer() != null) {
-            TextBuffer buffer = textComponent.getBuffer();
+            ScratchBuffer buffer = textComponent.getBuffer();
             int cursorX = buffer.cursorX;
             int cursorY = buffer.cursorY;
 
@@ -166,9 +174,10 @@ public class TextComponent implements IComponent {
     @Override
     public void render(Canvas canvas, float x, float y, float width, float height) {
         canvas.save();
-        Rect rect = Rect.makeXYWH(x, y, x + width, y + height);
+        Rect rect = Rect.makeXYWH(x, y, width, height);
         canvas.clipRect(rect);
         canvas.clear(ConfigurationParser.hexToInt(Deditor.getConfig().theme.background));
+        drawCurrentLineBackground(canvas, x, y, x + width, FontManager.getLineHeight());
         canvas.drawRect(rect, borderPaint);
         if (buffer != null) {
             renderText(canvas, x, y, width, height, buffer.offsetY);

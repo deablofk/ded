@@ -4,6 +4,7 @@ import dev.cwby.CommandHandler;
 import dev.cwby.Deditor;
 import dev.cwby.clipboard.ClipboardManager;
 import dev.cwby.clipboard.ClipboardType;
+import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
@@ -11,7 +12,6 @@ import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.Window;
-import dev.cwby.graphics.layout.component.FZFComponent;
 import dev.cwby.graphics.layout.component.TextComponent;
 import dev.cwby.lsp.LSPManager;
 import org.eclipse.lsp4j.*;
@@ -69,7 +69,7 @@ public class GlobalKeyHandler implements IKeyHandler {
             switchMode(INSERT);
         });
         KeybindingTrie.nmap("a", (w, b) -> {
-            b.moveCursorRight(w.getVisibleLines());
+            b.moveCursorRight();
             switchMode(INSERT);
         });
         KeybindingTrie.nmap("A", (_, b) -> {
@@ -93,27 +93,21 @@ public class GlobalKeyHandler implements IKeyHandler {
         });
 
         KeybindingTrie.nmap("d d", (_, b) -> b.deleteCurrentLine());
-        KeybindingTrie.nmap("h", (w, b) -> b.moveCursorLeft(w.getVisibleLines()));
-        KeybindingTrie.nmap("j", (w, b) -> b.moveCursorDown(w.getVisibleLines()));
-        KeybindingTrie.nmap("k", (w, b) -> b.moveCursorUp(w.getVisibleLines()));
-        KeybindingTrie.nmap("l", (w, b) -> b.moveCursorRight(w.getVisibleLines()));
+        KeybindingTrie.nmap("g g", (w, b) -> b.moveCursor(0, 0));
+        KeybindingTrie.nmap("G", (w, b) -> b.moveCursor(0, b.lines.size() - 1));
+        KeybindingTrie.nmap("h", (w, b) -> b.moveCursorLeft());
+        KeybindingTrie.nmap("j", (w, b) -> b.moveCursorDown());
+        KeybindingTrie.nmap("k", (w, b) -> b.moveCursorUp());
+        KeybindingTrie.nmap("l", (w, b) -> b.moveCursorRight());
         KeybindingTrie.nmap("w", (_, b) -> b.moveNextWord());
         KeybindingTrie.nmap("b", (_, b) -> b.movePreviousWord());
         KeybindingTrie.nmap("$", (_, b) -> b.gotoPosition(b.getCurrentLine().length() - 1, b.cursorY));
 
-        KeybindingTrie.nmap("CTRL-u", (w, b) -> b.moveCursorHalfUp(w.getVisibleLines()));
-        KeybindingTrie.nmap("CTRL-d", (w, b) -> b.moveCursorHalfDown(w.getVisibleLines()));
+        KeybindingTrie.nmap("CTRL-u", (w, b) -> b.moveCursorHalfUp());
+        KeybindingTrie.nmap("CTRL-d", (w, b) -> b.moveCursorHalfDown());
         KeybindingTrie.nmap("p", (_, b) -> b.pasteText(ClipboardManager.getClipboardContent(ClipboardType.INTERNAL)));
-        KeybindingTrie.nmap("CTRL-p", (w, _) -> {
-            if (w.getComponent() != null) {
-                ((FZFComponent) w.getComponent()).prev();
-            }
-        });
-        KeybindingTrie.nmap("CTRL-n", (w, _) -> {
-            if (w.getComponent() != null) {
-                ((FZFComponent) w.getComponent()).next();
-            }
-        });
+        KeybindingTrie.nmap("CTRL-p", (w, b) -> b.moveCursorUp());
+        KeybindingTrie.nmap("CTRL-n", (w, b) -> b.moveCursorDown());
         KeybindingTrie.nmap("CTRL-w h", (w, b) -> {
             if (w instanceof TiledWindow tiledWindow) {
                 tiledWindow.moveLeft();
@@ -142,15 +136,17 @@ public class GlobalKeyHandler implements IKeyHandler {
 
         // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
         KeybindingTrie.nmap("g d", (w, b) -> {
-            List<Location> definitions = LSPManager.getDefinitions(b.file.getAbsolutePath(), b.cursorY, b.cursorX);
-            if (definitions.size() == 1) {
-                Location location = definitions.getFirst();
-                CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
-                int x = location.getRange().getStart().getCharacter();
-                int y = location.getRange().getStart().getLine();
-                SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
-            } else {
-                // show options in the floating window for selecting the denition
+            if (b instanceof TextBuffer textBuffer) {
+                List<Location> definitions = LSPManager.getDefinitions(textBuffer.file.getAbsolutePath(), b.cursorY, b.cursorX);
+                if (definitions.size() == 1) {
+                    Location location = definitions.getFirst();
+                    CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
+                    int x = location.getRange().getStart().getCharacter();
+                    int y = location.getRange().getStart().getLine();
+                    SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
+                } else {
+                    // show options in the floating window for selecting the denition
+                }
             }
         });
 
@@ -159,10 +155,10 @@ public class GlobalKeyHandler implements IKeyHandler {
     private static void registerSelectMappings() {
         KeybindingTrie.smap("ESC", (_, _) -> switchMode(NAVIGATION));
         KeybindingTrie.map(SELECT_LINE, "ESC", (_, _) -> switchMode(NAVIGATION));
-        KeybindingTrie.smap("h", (w, b) -> b.moveCursorLeft(w.getVisibleLines()));
-        KeybindingTrie.smap("j", (w, b) -> b.moveCursorDown(w.getVisibleLines()));
-        KeybindingTrie.smap("k", (w, b) -> b.moveCursorUp(w.getVisibleLines()));
-        KeybindingTrie.smap("l", (w, b) -> b.moveCursorRight(w.getVisibleLines()));
+        KeybindingTrie.smap("h", (w, b) -> b.moveCursorLeft());
+        KeybindingTrie.smap("j", (w, b) -> b.moveCursorDown());
+        KeybindingTrie.smap("k", (w, b) -> b.moveCursorUp());
+        KeybindingTrie.smap("l", (w, b) -> b.moveCursorRight());
         KeybindingTrie.smap("y", (w, b) -> {
             String region = b.getRegion(startVisualX, startVisualY, b.cursorX, b.cursorY);
             ClipboardManager.setClipboardContent(ClipboardType.INTERNAL, region);
@@ -179,18 +175,13 @@ public class GlobalKeyHandler implements IKeyHandler {
     private static void registerInsertMappings() {
         KeybindingTrie.imap("TAB", (w, b) -> b.insertTextAtCursor("    "));
         KeybindingTrie.imap("CTRL-p", (w, b) -> {
-
             if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
-                SkiaRenderer.WM.getAutoCompleteWindow().moveSelection(-1);
-            } else if (w != null && w.isVisible()) {
-                ((FZFComponent) w).prev();
+                SkiaRenderer.WM.getAutoCompleteWindow().buffer.moveCursorUp();
             }
         });
         KeybindingTrie.imap("CTRL-n", (w, b) -> {
             if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
-                SkiaRenderer.WM.getAutoCompleteWindow().moveSelection(-1);
-            } else if (w != null && w.isVisible()) {
-                ((FZFComponent) w).next();
+                SkiaRenderer.WM.getAutoCompleteWindow().buffer.moveCursorDown();
             }
         });
 
@@ -258,9 +249,10 @@ public class GlobalKeyHandler implements IKeyHandler {
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
         } else if (root.action != null) {
             Window window = SkiaRenderer.WM.getCurrentWindow();
-            TextBuffer buffer = null;
+            ScratchBuffer buffer = null;
             if (window.getComponent() instanceof TextComponent textComponent) {
                 buffer = textComponent.getBuffer();
+                buffer.setVisibleLines(window.getVisibleLines());
             }
             root.action.accept(window, buffer);
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
@@ -297,18 +289,25 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handleInput(SDL_Event event) {
         TextInteractionMode mode = Deditor.getBufferMode();
         if (mode == INSERT && SkiaRenderer.WM.getCurrentWindow().getComponent() instanceof TextComponent textComponent) {
-            TextBuffer buffer = textComponent.getBuffer();
+            ScratchBuffer buffer = textComponent.getBuffer();
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
 
             if (c == '.' || Character.isLetterOrDigit(c)) {
-                float windowX = SkiaRenderer.WM.getCurrentWindow().x;
-                float windowY = SkiaRenderer.WM.getCurrentWindow().y;
-
                 LSPManager.sendDidChangeNotification(buffer);
-                List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.fileChunkLoader.getFile().getAbsolutePath(), buffer.cursorY, buffer.cursorX);
-                SkiaRenderer.WM.getAutoCompleteWindow().setSuggestions(suggestions);
-                SkiaRenderer.WM.getAutoCompleteWindow().show(windowX + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth()), windowY + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight());
+                List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.getFilepath(), buffer.cursorY, buffer.cursorX);
+                if (suggestions.isEmpty()) {
+                    return;
+                }
+                float windowX = SkiaRenderer.WM.getCurrentWindow().x + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth());
+                float windowY = SkiaRenderer.WM.getCurrentWindow().y + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight();
+
+                float maxWindowHeight = (Engine.getHeight() - FontManager.getLineHeight()) - windowY;
+                float windowWidth = 400;
+
+                var cmpWindow = SkiaRenderer.WM.getAutoCompleteWindow();
+                cmpWindow.setSuggestions(suggestions);
+                cmpWindow.show(windowX, windowY, windowWidth, maxWindowHeight);
             } else {
                 SkiaRenderer.WM.getAutoCompleteWindow().hide();
             }

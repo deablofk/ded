@@ -1,5 +1,6 @@
 package dev.cwby.lsp;
 
+import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextBuffer;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -123,9 +124,12 @@ public class LSPManager {
 
     private static int version = 1;
 
-    public static void sendDidChangeNotification(TextBuffer buffer) {
+    public static void sendDidChangeNotification(ScratchBuffer buffer) {
+        if (buffer.getFilepath() == null) {
+            return;
+        }
         VersionedTextDocumentIdentifier documentIdentifier = new VersionedTextDocumentIdentifier();
-        documentIdentifier.setUri("file://" + buffer.file.getAbsolutePath());
+        documentIdentifier.setUri("file://" + buffer.getFilepath());
         documentIdentifier.setVersion(version++);
 
         List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
