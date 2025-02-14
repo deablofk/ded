@@ -26,11 +26,7 @@ import static org.lwjgl.sdl.SDLKeycode.*;
 
 public class GlobalKeyHandler implements IKeyHandler {
 
-    private int lastKey = -1;
-    private StringBuilder keySequence = new StringBuilder();
-    private static final long SEQUENCE_TIMEOUT = 500;
     public static long lastKeyPressTime = 0;
-
     public static int startVisualX, startVisualY;
 
     public GlobalKeyHandler() {
