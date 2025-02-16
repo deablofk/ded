@@ -11,12 +11,18 @@ import java.util.List;
 import java.util.Map;
 
 public class SyntaxHighlighter {
-    private static Language TSJava;
     private static Map<String, Node> parsedCache = new HashMap<>();
+    private static Map<String, Language> languageCache = new HashMap<>();
 
-    static {
-        System.load(System.getProperty("user.dir") + "/libtree-sitter-java.so");
-        TSJava = Language.load(SymbolLookup.loaderLookup(), "tree_sitter_java");
+    public static Language loadTSLanguage(String libraryPath, String language) {
+        if (languageCache.containsKey(language)) {
+            return languageCache.get(language);
+        }
+
+        System.load(libraryPath);
+        var loadedLanguage = Language.load(SymbolLookup.loaderLookup(), language);
+        languageCache.put(language, loadedLanguage);
+        return loadedLanguage;
     }
 
     public static Node parse(String code) {
@@ -24,7 +30,8 @@ public class SyntaxHighlighter {
             return parsedCache.get(code);
         }
 
-        Parser parser = new Parser(TSJava);
+        String filePath = System.getProperty("user.dir") + "/libtree-sitter-java.so";
+        Parser parser = new Parser(loadTSLanguage(filePath, "tree_sitter_java"));
         Tree tree = parser.parse(code, InputEncoding.UTF_8).orElse(null);
         Node rootNode = tree.getRootNode();
         parsedCache.put(code, rootNode);
