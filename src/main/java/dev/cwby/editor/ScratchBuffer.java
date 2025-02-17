@@ -243,33 +243,47 @@ public class ScratchBuffer {
         gotoPosition(index + 1, cursorY);
     }
 
-    public void moveNextWord() {
+    private int[] getWordBounds(boolean forward) {
         StringBuilder currentLine = getCurrentLine();
         int len = currentLine.length();
+        int start = cursorX;
+        int end = cursorX;
 
-        while (cursorX < len && Character.isLetterOrDigit(currentLine.charAt(cursorX))) {
-            cursorX++;
+        if (forward) {
+            while (end < len && Character.isLetterOrDigit(currentLine.charAt(end))) {
+                end++;
+            }
+            while (end < len && !Character.isLetterOrDigit(currentLine.charAt(end))) {
+                end++;
+            }
+        } else {
+            while (start > 0 && !Character.isLetterOrDigit(currentLine.charAt(start - 1))) {
+                start--;
+            }
+            while (start > 0 && Character.isLetterOrDigit(currentLine.charAt(start - 1))) {
+                start--;
+            }
         }
 
-        while (cursorX < len && !Character.isLetterOrDigit(currentLine.charAt(cursorX))) {
-            cursorX++;
-        }
+        return new int[]{start, end};
+    }
 
-        cursorX = Math.min(cursorX, len);
+    public void moveNextWord() {
+        cursorX = getWordBounds(true)[1];
     }
 
     public void movePreviousWord() {
-        StringBuilder currentLine = getCurrentLine();
+        cursorX = getWordBounds(false)[0];
+    }
 
-        while (cursorX > 0 && !Character.isLetterOrDigit(currentLine.charAt(cursorX - 1))) {
-            cursorX--;
-        }
+    public void removeNextWord() {
+        int[] bounds = getWordBounds(true);
+        getCurrentLine().delete(bounds[0], bounds[1]);
+    }
 
-        while (cursorX > 0 && Character.isLetterOrDigit(currentLine.charAt(cursorX - 1))) {
-            cursorX--;
-        }
-
-        cursorX = Math.max(cursorX, 0);
+    public void removePreviousWord() {
+        int[] bounds = getWordBounds(false);
+        getCurrentLine().delete(bounds[0], bounds[1]);
     }
 
     public void gotoPosition(int x, int y) {

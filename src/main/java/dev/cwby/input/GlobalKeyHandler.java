@@ -142,6 +142,8 @@ public class GlobalKeyHandler implements IKeyHandler {
         });
 
         KeybindingTrie.nmap("RET", (w, _) -> w.onTrigger());
+        KeybindingTrie.nmap("c e", (w, b) -> b.removeNextWord());
+        KeybindingTrie.nmap("c b", (w, b) -> b.removePreviousWord());
 
         // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
         KeybindingTrie.nmap("g d", (w, b) -> {
