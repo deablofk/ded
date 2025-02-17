@@ -145,6 +145,8 @@ public class GlobalKeyHandler implements IKeyHandler {
         KeybindingTrie.nmap("c e", (w, b) -> b.removeNextWord());
         KeybindingTrie.nmap("c b", (w, b) -> b.removePreviousWord());
 
+        KeybindingTrie.nmap("CTRL-=", (w, b) -> FontManager.increaseFontSize(1));
+        KeybindingTrie.nmap("CTRL--", (w, b) -> FontManager.increaseFontSize(-1));
         // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
         KeybindingTrie.nmap("g d", (w, b) -> {
             if (b instanceof TextBuffer textBuffer) {

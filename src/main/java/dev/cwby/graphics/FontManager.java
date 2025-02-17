@@ -24,4 +24,9 @@ public class FontManager {
     public static Font getDefaultFont() {
         return bestFont;
     }
+
+    public static void increaseFontSize(int size) {
+        cfg.increaseFontSize(size);
+        bestFont.setSize(cfg.size);
+    }
 }

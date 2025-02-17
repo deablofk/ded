@@ -7,4 +7,8 @@ public class FontConfig {
     public FontConfig() {
     }
 
+    public void increaseFontSize(int i) {
+        this.size += i;
+    }
+
 }
