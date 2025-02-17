@@ -129,6 +129,18 @@ public class GlobalKeyHandler implements IKeyHandler {
             }
         });
 
+        KeybindingTrie.nmap("CTRL-w v", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                CommandHandler.executeCommand("vs");
+            }
+        });
+
+        KeybindingTrie.nmap("CTRL-w s", (w, b) -> {
+            if (w instanceof TiledWindow tiledWindow) {
+                CommandHandler.executeCommand("s");
+            }
+        });
+
         KeybindingTrie.nmap("RET", (w, _) -> w.onTrigger());
 
         // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
