@@ -21,17 +21,19 @@ public class SyntaxHighlighter {
 
         System.load(libraryPath);
         var loadedLanguage = Language.load(SymbolLookup.loaderLookup(), language);
+        System.out.println("Loaded language " + language + " - " + loadedLanguage);
         languageCache.put(language, loadedLanguage);
         return loadedLanguage;
     }
 
-    public static Node parse(String code) {
+    public static Node parse(String code, String fileType) {
         if (parsedCache.containsKey(code)) {
             return parsedCache.get(code);
         }
 
-        String filePath = System.getProperty("user.dir") + "/libtree-sitter-java.so";
-        Parser parser = new Parser(loadTSLanguage(filePath, "tree_sitter_java"));
+        String tsLanguage = TreeSitterLanguages.getTSFileFromFileType(fileType);
+        String filePath = System.getProperty("user.dir") + "/config/highlight/" + tsLanguage + ".so";
+        Parser parser = new Parser(loadTSLanguage(filePath, "tree_sitter_" + tsLanguage));
         Tree tree = parser.parse(code, InputEncoding.UTF_8).orElse(null);
         Node rootNode = tree.getRootNode();
         parsedCache.put(code, rootNode);
