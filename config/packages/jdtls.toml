@@ -1,0 +1,11 @@
+name = "jdtls"
+description = "Java language server."
+homepage = "https://github.com/eclipse/eclipse.jdt.ls"
+licenses = ["EPL-2.0"]
+languages = ["Java"]
+categories = ["LSP"]
+
+[source]
+type = "generic"
+packageOrUrl = "https://download.eclipse.org/jdtls/milestones/1.44.0/jdt-language-server-1.44.0-202501221502.tar.gz"
+executable = "bin/jdtls"

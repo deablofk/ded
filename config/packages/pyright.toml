@@ -1,0 +1,11 @@
+name = "pyright"
+description = "Static type checker for Python."
+homepage = "https://github.com/microsoft/pyright"
+licenses = ["MIT"]
+languages = ["Python"]
+categories = ["LSP"]
+
+[source]
+type = "command"
+packageOrUrl = "pyright@1.1.394"
+executable = "npx pyright-langserver"

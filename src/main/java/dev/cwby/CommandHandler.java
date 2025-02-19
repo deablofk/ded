@@ -24,6 +24,7 @@ public class CommandHandler {
         COMMANDS.put("s", new Split());
         COMMANDS.put("fzf", new ToggleFZF());
         COMMANDS.put("explorer", new Explorer());
+        COMMANDS.put("pkgman", new PkgMan());
     }
 
     public static void setCommand(String command, ICommand mode) {
