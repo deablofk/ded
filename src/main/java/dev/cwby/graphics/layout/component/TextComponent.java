@@ -80,7 +80,7 @@ public class TextComponent implements IComponent {
         float lineHeight = FontManager.getLineHeight();
         for (int i = offsetY, count = 0; i < buffer.lines.size(); i++, count++) {
             StringBuilder line = buffer.lines.get(i);
-            Node root = SyntaxHighlighter.parse(line.toString());
+            Node root = SyntaxHighlighter.parse(line.toString(), buffer.getFileType());
             Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
             drawHighlightedText(canvas, line.toString(), x, y + count * lineHeight, width, height, styles);
         }

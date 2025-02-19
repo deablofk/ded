@@ -13,6 +13,7 @@ public class ScratchBuffer {
     public int offsetY = 0;
     public int visibleLines = 0;
     public String filepath = null;
+    public String fileType = null;
 
     public ScratchBuffer() {
         this.lines.add(new StringBuilder());
@@ -399,5 +400,13 @@ public class ScratchBuffer {
             }
         }
         return positions;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
     }
 }

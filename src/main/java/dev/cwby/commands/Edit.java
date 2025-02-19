@@ -4,6 +4,8 @@ import dev.cwby.BufferManager;
 import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
 
+import java.io.File;
+
 public class Edit implements ICommand {
 
     @Override
