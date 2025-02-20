@@ -8,4 +8,8 @@ categories = ["LSP"]
 [source]
 type = "generic"
 packageOrUrl = "https://download.eclipse.org/jdtls/milestones/1.44.0/jdt-language-server-1.44.0-202501221502.tar.gz"
-executable = "bin/jdtls"
+executable = "bin/jdtls -data /home/cwby/.cache/jdtls-workspace"
+
+[trigger]
+filetypes = ["java"]
+projectRoot = ["pom.xml", "build.gradle", "build.gradle.kts"]

@@ -1,5 +1,7 @@
 package dev.cwby.editor;
 
+import dev.cwby.FileUtils;
+
 import java.io.File;
 
 public class TextBuffer extends ScratchBuffer {
@@ -16,6 +18,7 @@ public class TextBuffer extends ScratchBuffer {
         loadInitialChunk();
         this.file = loader.getFile();
         this.filepath = file.getAbsolutePath();
+        this.fileType = FileUtils.getFileExtension(file.getAbsolutePath());
     }
 
     private void loadInitialChunk() {

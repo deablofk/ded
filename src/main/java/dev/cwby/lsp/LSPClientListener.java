@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DefaultClient implements LanguageClient {
+public class LSPClientListener implements LanguageClient {
 
     @Override
     public void telemetryEvent(Object o) {

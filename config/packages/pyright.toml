@@ -8,4 +8,8 @@ categories = ["LSP"]
 [source]
 type = "command"
 packageOrUrl = "pyright@1.1.394"
-executable = "npx pyright-langserver"
+executable = "npx pyright-langserver --stdio"
+
+[trigger]
+filetypes = ["py"]
+projectRoot = []

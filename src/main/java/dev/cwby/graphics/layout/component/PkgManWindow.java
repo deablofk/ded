@@ -19,7 +19,6 @@ public class PkgManWindow extends FloatingWindow {
     }
 
     public void initializeBuffer() {
-        PackageManager.initializePackages();
         for (PackageData packageData : PackageManager.getPackages()) {
             buffer.lines.add(new StringBuilder(packageData.name + " | installed: " + packageData.isInstalled));
         }

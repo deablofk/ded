@@ -5,7 +5,6 @@ import dev.cwby.Deditor;
 import dev.cwby.clipboard.ClipboardManager;
 import dev.cwby.clipboard.ClipboardType;
 import dev.cwby.editor.ScratchBuffer;
-import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.FontManager;
@@ -13,6 +12,7 @@ import dev.cwby.graphics.SkiaRenderer;
 import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.component.TextComponent;
+import dev.cwby.lsp.LSPClient;
 import dev.cwby.lsp.LSPManager;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -149,17 +149,19 @@ public class GlobalKeyHandler implements IKeyHandler {
         KeybindingTrie.nmap("CTRL--", (w, b) -> FontManager.increaseFontSize(-1));
         // lsp stuff, it is probably best to register only if there is a lsp in the buffer, but actually ded cant have specific buffers binding
         KeybindingTrie.nmap("g d", (w, b) -> {
-            if (b instanceof TextBuffer textBuffer) {
-                List<Location> definitions = LSPManager.getDefinitions(textBuffer.file.getAbsolutePath(), b.cursorY, b.cursorX);
-                if (definitions.size() == 1) {
-                    Location location = definitions.getFirst();
-                    CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
-                    int x = location.getRange().getStart().getCharacter();
-                    int y = location.getRange().getStart().getLine();
-                    SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
-                } else {
-                    // show options in the floating window for selecting the denition
-                }
+            LSPClient client = LSPManager.getLSPClient(b);
+            if (client == null)
+                return;
+
+            List<Location> definitions = client.requestDefinitions(b);
+            if (definitions.size() == 1) {
+                Location location = definitions.getFirst();
+                CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
+                int x = location.getRange().getStart().getCharacter();
+                int y = location.getRange().getStart().getLine();
+                SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
+            } else {
+                // show options in the floating window for selecting the denition
             }
         });
 
@@ -208,7 +210,7 @@ public class GlobalKeyHandler implements IKeyHandler {
                 CompletionItem selectedItem = cmpWindow.select();
                 if (selectedItem != null) {
                     Either<TextEdit, InsertReplaceEdit> eitherTextEdit = selectedItem.getTextEdit();
-                    if (eitherTextEdit.getLeft() != null) {
+                    if (eitherTextEdit != null) {
                         TextEdit edit = eitherTextEdit.getLeft();
                         b.replaceTextInRange(edit.getRange(), edit.getNewText());
                         if (selectedItem.getKind() == CompletionItemKind.Constructor || selectedItem.getKind() == CompletionItemKind.Method) {
@@ -307,8 +309,11 @@ public class GlobalKeyHandler implements IKeyHandler {
             buffer.appendChar(c);
 
             if (c == '.' || Character.isLetterOrDigit(c)) {
-                LSPManager.sendDidChangeNotification(buffer);
-                List<CompletionItem> suggestions = LSPManager.onDotPressed(buffer.getFilepath(), buffer.cursorY, buffer.cursorX);
+                LSPClient client = LSPManager.getLSPClient(buffer);
+                if (client == null)
+                    return;
+                client.sendDidChange(buffer);
+                List<CompletionItem> suggestions = client.requestCompletion(buffer);
                 if (suggestions.isEmpty()) {
                     return;
                 }

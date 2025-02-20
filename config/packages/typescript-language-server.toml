@@ -1,0 +1,15 @@
+name = "typescript-language-server"
+description = "TypeScript & JavaScript Language Server."
+homepage = "https://github.com/typescript-language-server/typescript-language-server"
+licenses = ["MIT"]
+languages = ["TypeScript", "JavaScript"]
+categories = ["LSP"]
+
+[source]
+type = "command"
+packageOrUrl = "typescript-language-server@4.3.3 typescript"
+executable = "npx typescript-language-server --stdio"
+
+[trigger]
+filetypes = ["js", "jsx", "ts", "tsx"]
+projectRoot = ["angular.json"]

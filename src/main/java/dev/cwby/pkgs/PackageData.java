@@ -9,13 +9,19 @@ public class PackageData {
     public String homepage;
     public List<String> licenses;
     public List<String> languages;
-    public List<String> categories;
+    public List<PackageCategory> categories;
     public Source source;
     public boolean isInstalled;
+    public Trigger trigger;
 
     public static class Source {
-        public String type;
+        public PackageSourceType type;
         public String packageOrUrl;
         public String executable;
+    }
+
+    public static class Trigger {
+        public List<String> filetypes;
+        public List<String> projectRoot;
     }
 }
