@@ -101,7 +101,8 @@ public class GlobalKeyHandler implements IKeyHandler {
         KeybindingTrie.nmap("l", (w, b) -> b.moveCursorRight());
         KeybindingTrie.nmap("w", (_, b) -> b.moveNextWord());
         KeybindingTrie.nmap("b", (_, b) -> b.movePreviousWord());
-        KeybindingTrie.nmap("$", (_, b) -> b.gotoPosition(b.getCurrentLine().length() - 1, b.cursorY));
+        KeybindingTrie.nmap("SHIFT-$", (_, b) -> b.gotoPosition(b.getCurrentLine().length() - 1, b.cursorY));
+        KeybindingTrie.nmap("0", (_, b) -> b.gotoPosition(0, b.cursorY));
         KeybindingTrie.nmap("SHIFT-#", (_, b) -> b.searchWordUnderCursor());
 
         KeybindingTrie.nmap("CTRL-u", (w, b) -> b.moveCursorHalfUp());
@@ -258,11 +259,12 @@ public class GlobalKeyHandler implements IKeyHandler {
     public void handle(SDL_Event e) {
         int keyCode = e.key().key();
         short mod = e.key().mod();
-        int keyChar = SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
-        String keyPressed = getKey(mod, keyCode, (char) keyChar);
+        char keyChar = (char) SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
+        String keyPressed = getKey(mod, keyCode, keyChar);
 
-        if (keyCode > 47 && keyCode < 58) {
-            KeybindingTrie.appendNumberInput(keyPressed);
+        if (Character.isDigit(keyChar) && (KeybindingTrie.getNumberInput() != 0 || keyChar != '0')) {
+            KeybindingTrie.appendNumberInput(keyChar);
+            return;
         }
 
         root = root.search(keyPressed);
@@ -270,13 +272,18 @@ public class GlobalKeyHandler implements IKeyHandler {
         if (root == null) {
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
         } else if (root.action != null) {
+            int repeatCount = KeybindingTrie.getNumberInput();
             Window window = SkiaRenderer.WM.getCurrentWindow();
             ScratchBuffer buffer = null;
             if (window.getComponent() instanceof TextComponent textComponent) {
                 buffer = textComponent.getBuffer();
                 buffer.setVisibleLines(window.getVisibleLines());
             }
-            for (int i = 0; i < KeybindingTrie.getNumberInputLength(); i++) {
+            if (repeatCount > 0) {
+                for (int i = 0; i < KeybindingTrie.getNumberInput(); i++) {
+                    root.action.accept(window, buffer);
+                }
+            } else {
                 root.action.accept(window, buffer);
             }
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());

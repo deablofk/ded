@@ -61,7 +61,7 @@ public class KeybindingTrie {
         insertKeybinding(mode, keybinding, action);
     }
 
-    public static void appendNumberInput(String number) {
+    public static void appendNumberInput(char number) {
         numberInput.append(number);
     }
 
@@ -69,11 +69,10 @@ public class KeybindingTrie {
         numberInput.setLength(0);
     }
 
-    public static int getNumberInputLength() {
+    public static int getNumberInput() {
         if (numberInput.isEmpty()) {
-            return 1;
+            return 0;
         }
-
         return Integer.parseInt(numberInput.toString());
     }
 
