@@ -28,6 +28,7 @@ public class GlobalKeyHandler implements IKeyHandler {
 
     public static long lastKeyPressTime = 0;
     public static int startVisualX, startVisualY;
+    private static TrieNode root = KeybindingTrie.getRoot(Deditor.getBufferMode());
 
     public GlobalKeyHandler() {
         registerNormalMappings();
@@ -59,6 +60,9 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     private static void registerNormalMappings() {
+        KeybindingTrie.nmap("ESC", (w, b) -> {
+            KeybindingTrie.resetNumberInput();
+        });
         KeybindingTrie.nmap("i", (w, b) -> switchMode(INSERT));
         KeybindingTrie.nmap("I", (w, b) -> {
             b.moveToFirstNonWhitespaceChar();
@@ -249,7 +253,6 @@ public class GlobalKeyHandler implements IKeyHandler {
         Deditor.setBufferMode(mode);
     }
 
-    TrieNode root = KeybindingTrie.getRoot(Deditor.getBufferMode());
 
     @Override
     public void handle(SDL_Event e) {
@@ -257,6 +260,10 @@ public class GlobalKeyHandler implements IKeyHandler {
         short mod = e.key().mod();
         int keyChar = SDLKeyboard.SDL_GetKeyFromScancode(e.key().scancode(), mod, false);
         String keyPressed = getKey(mod, keyCode, (char) keyChar);
+
+        if (keyCode > 47 && keyCode < 58) {
+            KeybindingTrie.appendNumberInput(keyPressed);
+        }
 
         root = root.search(keyPressed);
 
@@ -269,8 +276,11 @@ public class GlobalKeyHandler implements IKeyHandler {
                 buffer = textComponent.getBuffer();
                 buffer.setVisibleLines(window.getVisibleLines());
             }
-            root.action.accept(window, buffer);
+            for (int i = 0; i < KeybindingTrie.getNumberInputLength(); i++) {
+                root.action.accept(window, buffer);
+            }
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
+            KeybindingTrie.resetNumberInput();
         }
 
         lastKeyPressTime = System.currentTimeMillis();

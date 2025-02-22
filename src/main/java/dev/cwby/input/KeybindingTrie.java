@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 public class KeybindingTrie {
 
     private static final Map<TextInteractionMode, TrieNode> ROOTS = new HashMap<>();
+    private static final StringBuilder numberInput = new StringBuilder();
 
     public static TrieNode getRoot(TextInteractionMode mode) {
         TrieNode node = ROOTS.get(mode);
@@ -58,6 +59,22 @@ public class KeybindingTrie {
 
     public static void map(TextInteractionMode mode, String keybinding, BiConsumer<Window, ScratchBuffer> action) {
         insertKeybinding(mode, keybinding, action);
+    }
+
+    public static void appendNumberInput(String number) {
+        numberInput.append(number);
+    }
+
+    public static void resetNumberInput() {
+        numberInput.setLength(0);
+    }
+
+    public static int getNumberInputLength() {
+        if (numberInput.isEmpty()) {
+            return 1;
+        }
+
+        return Integer.parseInt(numberInput.toString());
     }
 
 }
