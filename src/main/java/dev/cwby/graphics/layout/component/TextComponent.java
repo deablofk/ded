@@ -3,7 +3,6 @@ package dev.cwby.graphics.layout.component;
 import dev.cwby.Deditor;
 import dev.cwby.config.ConfigurationParser;
 import dev.cwby.editor.ScratchBuffer;
-import dev.cwby.editor.TextBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.FontManager;
 import dev.cwby.graphics.SkiaRenderer;
@@ -47,21 +46,34 @@ public class TextComponent implements IComponent {
         FontMetrics metrics = font.getMetrics();
         float baselineOffset = -metrics.getAscent();
         float textY = y + baselineOffset;
+        int tabSize = 4;
+        float spaceWidth = font.measureTextWidth(" ");
 
         for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
             Paint paint = styles.getOrDefault(i, textPaint);
 
-            if (currentPaint == null || !currentPaint.equals(paint)) {
+            if (codePoint == '\t') {
                 if (!currentText.isEmpty()) {
                     canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
                     offsetX += font.measureTextWidth(currentText.toString());
                     currentText.setLength(0);
                 }
-                currentPaint = paint;
+
+                float tabWidth = spaceWidth * tabSize;
+                offsetX = ((int) ((offsetX + tabWidth) / tabWidth)) * tabWidth;
+            } else {
+                if (currentPaint == null || !currentPaint.equals(paint)) {
+                    if (!currentText.isEmpty()) {
+                        canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
+                        offsetX += font.measureTextWidth(currentText.toString());
+                        currentText.setLength(0);
+                    }
+                    currentPaint = paint;
+                }
+                currentText.append(Character.toChars(codePoint));
             }
 
-            currentText.append(Character.toChars(codePoint));
             i += Character.charCount(codePoint);
         }
         if (!currentText.isEmpty()) {
@@ -108,11 +120,18 @@ public class TextComponent implements IComponent {
                 float x = -buffer.offsetX;
                 if (cursorY >= 0) {
                     StringBuilder line = buffer.lines.get(cursorY);
+                    int tabSize = 4;
+                    float spaceWidth = FontManager.getDefaultFont().measureTextWidth(" ");
                     for (int i = 0; i < cursorX && i < line.length(); ) {
                         int codePoint = line.codePointAt(i);
-                        Font font = FontManager.getDefaultFont();
-                        String glyph = new String(Character.toChars(codePoint));
-                        x += font.measureTextWidth(glyph);
+                        if (codePoint == '\t') {
+                            float tabWidth = spaceWidth * tabSize;
+                            x = ((int) ((x + tabWidth) / tabWidth)) * tabWidth;
+                        } else {
+                            Font font = FontManager.getDefaultFont();
+                            String glyph = new String(Character.toChars(codePoint));
+                            x += font.measureTextWidth(glyph);
+                        }
                         i += Character.charCount(codePoint);
                     }
                 }

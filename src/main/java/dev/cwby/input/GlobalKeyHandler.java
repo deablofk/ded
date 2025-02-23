@@ -193,7 +193,7 @@ public class GlobalKeyHandler implements IKeyHandler {
     }
 
     private static void registerInsertMappings() {
-        KeybindingTrie.imap("TAB", (w, b) -> b.insertTextAtCursor("    "));
+        KeybindingTrie.imap("TAB", (w, b) -> b.insertTextAtCursor("\t"));
         KeybindingTrie.imap("CTRL-p", (w, b) -> {
             if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
                 SkiaRenderer.WM.getAutoCompleteWindow().buffer.moveCursorUp();
