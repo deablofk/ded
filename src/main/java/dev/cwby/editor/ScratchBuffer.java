@@ -182,7 +182,9 @@ public class ScratchBuffer {
     }
 
     public void deleteCurrentLine() {
-        if (lines.isEmpty()) {
+        if (lines.size() == 1) {
+            cursorX = 0;
+            getCurrentLine().setLength(0);
             return;
         }
 
