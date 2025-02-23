@@ -73,7 +73,7 @@ public class GlobalKeyHandler implements IKeyHandler {
             switchMode(INSERT);
         });
         KeybindingTrie.nmap("A", (_, b) -> {
-            b.moveToLastNonWhitespaceChar();
+            b.moveToLastChar();
             switchMode(INSERT);
         });
         KeybindingTrie.nmap("v", (_, b) -> {

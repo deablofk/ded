@@ -239,11 +239,8 @@ public class ScratchBuffer {
         gotoPosition(index, cursorY);
     }
 
-    public void moveToLastNonWhitespaceChar() {
-        String trimed = getCurrentLine().toString().trim();
-        char c = trimed.charAt(trimed.length() - 1);
-        int index = getCurrentLine().indexOf(c + "");
-        gotoPosition(index + 1, cursorY);
+    public void moveToLastChar() {
+        gotoPosition(getCurrentLine().length(), cursorY);
     }
 
     private int[] getWordBounds(boolean forward) {
