@@ -148,37 +148,60 @@ public class ScratchBuffer {
         if (cursorY < 0) {
             cursorY = 0;
         }
-        cursorX = 0;
-        lines.add(cursorY, new StringBuilder());
+        int level = calculateIndentation(getCurrentLine().toString()) * 4;
+        StringBuilder newLine = new StringBuilder(" ".repeat(level));
+        cursorX = newLine.length();
+        lines.add(cursorY, newLine);
     }
 
     public void newLineDown() {
-        cursorY++;
-        cursorX = 0;
-        lines.add(cursorY, new StringBuilder());
+        int level = calculateIndentation(getCurrentLine().toString()) * 4;
+        StringBuilder newLine = new StringBuilder(" ".repeat(level));
+        cursorX = newLine.length();
+        lines.add(++cursorY, newLine);
+    }
+
+    public int countLeadingIndentation(String line) {
+        int spaceCount = 0;
+        int tabCount = 0;
+        while (spaceCount < line.length() && (line.charAt(spaceCount) == ' ' || line.charAt(spaceCount) == '\t')) {
+            if (line.charAt(spaceCount) == ' ') {
+                spaceCount++;
+            } else if (line.charAt(spaceCount) == '\t') {
+                tabCount++;
+                spaceCount++;
+            }
+        }
+
+        return tabCount * 4 + (spaceCount / 4);
+    }
+
+    public int calculateIndentation(String previousLine) {
+        int indent = countLeadingIndentation(previousLine);
+
+        if (previousLine.endsWith("{")) {
+            indent++;
+        }
+
+        return Math.max(indent, 0);
     }
 
     public void smartNewLine() {
         StringBuilder currentLine = lines.get(cursorY);
-        int indentLevel = 0;
-
-        while (indentLevel < currentLine.length() && Character.isWhitespace(currentLine.charAt(indentLevel))) {
-            indentLevel++;
+        int lineLength = currentLine.length();
+        int level = calculateIndentation(currentLine.toString()) * 4;
+        System.out.println(level);
+        String indentation = " ".repeat(level);
+        StringBuilder newLine = new StringBuilder(indentation);
+        if (cursorX >= lineLength - 1) {
+            lines.add(++cursorY, newLine);
+            cursorX = newLine.length();
+        } else {
+            lines.set(cursorY, new StringBuilder(currentLine.substring(0, cursorX)));
+            newLine.append(currentLine.substring(cursorX));
+            lines.add(++cursorY, new StringBuilder(newLine));
+            cursorX = level;
         }
-
-        String indentation = currentLine.substring(0, indentLevel);
-
-        if (cursorX > 0 && cursorX <= currentLine.length()) {
-            char lastChar = currentLine.charAt(cursorX - 1);
-
-            if (lastChar == '{' || lastChar == '(' || lastChar == ':') {
-                indentation += "    ";
-            }
-        }
-
-        lines.add(cursorY + 1, new StringBuilder(indentation));
-        cursorX = indentation.length();
-        cursorY++;
     }
 
     public void deleteCurrentLine() {
