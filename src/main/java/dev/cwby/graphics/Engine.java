@@ -4,6 +4,7 @@ import dev.cwby.clipboard.ClipboardManager;
 import dev.cwby.clipboard.ClipboardType;
 import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.input.IKeyHandler;
+import dev.cwby.lsp.LSPManager;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLEvents;
@@ -60,8 +61,9 @@ public class Engine {
             // handle events
             while (SDL_PollEvent(event)) {
                 switch (event.type()) {
-                    case SDLEvents.SDL_EVENT_QUIT:
+                    case SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED, SDLEvents.SDL_EVENT_QUIT:
                         shouldClose = true;
+                        LSPManager.closeAllLsp();
                         break;
                     case SDLEvents.SDL_EVENT_KEY_DOWN:
                         keyHandler.handle(event);
