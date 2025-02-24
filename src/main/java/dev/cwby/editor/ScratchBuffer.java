@@ -259,7 +259,9 @@ public class ScratchBuffer {
     public void moveToFirstNonWhitespaceChar() {
         char c = getCurrentLine().toString().trim().charAt(0);
         int index = getCurrentLine().indexOf(c + "");
-        gotoPosition(index, cursorY);
+        if (index != -1) {
+            gotoPosition(index, cursorY);
+        }
     }
 
     public void moveToLastChar() {
@@ -307,6 +309,7 @@ public class ScratchBuffer {
     public void removePreviousWord() {
         int[] bounds = getWordBounds(false);
         getCurrentLine().delete(bounds[0], bounds[1]);
+        cursorX = bounds[0];
     }
 
     public void gotoPosition(int x, int y) {
