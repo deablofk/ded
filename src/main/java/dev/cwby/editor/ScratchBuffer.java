@@ -334,7 +334,7 @@ public class ScratchBuffer {
             } else if (line == startLine) {
                 region.append(content.substring(startChar)).append("\n");
             } else if (line == endLine) {
-                if (endChar + 1 < content.length()) {
+                if (endChar + 1 <= content.length()) {
                     region.append(content, 0, endChar + 1);
                 } else {
                     region.append(content, 0, endChar);
@@ -357,27 +357,30 @@ public class ScratchBuffer {
             endLine = tempLine;
         }
 
+        List<Integer> linesToRemove = new ArrayList<>();
         for (int line = startLine; line <= endLine; line++) {
             StringBuilder content = lines.get(line);
 
             if (line == startLine && line == endLine) {
-                content.delete(startChar, endChar);
+                content.delete(startChar, endChar + 1);
             } else if (line == startLine) {
                 content.delete(startChar, content.length());
             } else if (line == endLine) {
-                content.delete(0, endChar);
+                content.delete(0, endChar + 1);
             } else {
-                lines.set(line, new StringBuilder()); // Clear intermediate lines
+                linesToRemove.add(line);
             }
         }
 
-        // Merge lines if deletion spanned multiple lines
+        for (Integer line : linesToRemove) {
+            lines.remove(line.intValue());
+        }
+
         if (startLine < lines.size() - 1 && startLine != endLine) {
             lines.get(startLine).append(lines.get(endLine));
             lines.remove(endLine);
         }
 
-        // Adjust cursor position
         cursorX = startChar;
         cursorY = startLine;
     }
