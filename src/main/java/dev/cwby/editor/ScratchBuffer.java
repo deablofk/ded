@@ -148,51 +148,48 @@ public class ScratchBuffer {
         if (cursorY < 0) {
             cursorY = 0;
         }
-        int level = calculateIndentation(getCurrentLine().toString()) * 4;
-        StringBuilder newLine = new StringBuilder(" ".repeat(level));
+        StringBuilder newLine = new StringBuilder(calculateIndentation(getCurrentLine().toString()));
         cursorX = newLine.length();
         lines.add(cursorY, newLine);
     }
 
     public void newLineDown() {
-        int level = calculateIndentation(getCurrentLine().toString()) * 4;
-        StringBuilder newLine = new StringBuilder(" ".repeat(level));
+        StringBuilder newLine = new StringBuilder(calculateIndentation(getCurrentLine().toString()));
         cursorX = newLine.length();
         lines.add(++cursorY, newLine);
     }
 
-    public int countLeadingIndentation(String line) {
-        int spaceCount = 0;
-        int tabCount = 0;
-        while (spaceCount < line.length() && (line.charAt(spaceCount) == ' ' || line.charAt(spaceCount) == '\t')) {
-            if (line.charAt(spaceCount) == ' ') {
+    public int calculateTabCount(final String line) {
+        int spaceCount = 0, tabCount = 0;
+
+        for (char c : line.toCharArray()) {
+            if (c == ' ') {
                 spaceCount++;
-            } else if (line.charAt(spaceCount) == '\t') {
+            } else if (c == '\t') {
                 tabCount++;
-                spaceCount++;
+            } else {
+                break;
             }
         }
 
-        return tabCount * 4 + (spaceCount / 4);
+        return tabCount + spaceCount / 4;
     }
 
-    public int calculateIndentation(String previousLine) {
-        int indent = countLeadingIndentation(previousLine);
+    public String calculateIndentation(final String previousLine) {
+        int tabCount = calculateTabCount(previousLine);
 
         if (previousLine.endsWith("{")) {
-            indent++;
+            tabCount++;
         }
 
-        return Math.max(indent, 0);
+        return "\t".repeat(Math.max(tabCount, 0));
     }
 
     public void smartNewLine() {
         StringBuilder currentLine = lines.get(cursorY);
         int lineLength = currentLine.length();
-        int level = calculateIndentation(currentLine.toString()) * 4;
-        System.out.println(level);
-        String indentation = " ".repeat(level);
-        StringBuilder newLine = new StringBuilder(indentation);
+        String indentation = calculateIndentation(currentLine.toString());
+        StringBuilder newLine = new StringBuilder(calculateIndentation(currentLine.toString()));
         if (cursorX >= lineLength - 1) {
             lines.add(++cursorY, newLine);
             cursorX = newLine.length();
@@ -200,7 +197,7 @@ public class ScratchBuffer {
             lines.set(cursorY, new StringBuilder(currentLine.substring(0, cursorX)));
             newLine.append(currentLine.substring(cursorX));
             lines.add(++cursorY, new StringBuilder(newLine));
-            cursorX = level;
+            cursorX = indentation.length();
         }
     }
 
