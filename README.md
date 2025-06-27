@@ -1,5 +1,9 @@
 # Deditor - A Modern Text Editor
 
+## DEMO 
+
+https://deablofk.github.io/ded/assets/output_video.mp4
+
 ## Overview
 
 Deditor is a modern, feature-rich text editor built with Java. It provides a sleek interface with advanced code editing capabilities, including syntax highlighting, code intelligence through Language Server Protocol (LSP) integration, and a customizable environment.
