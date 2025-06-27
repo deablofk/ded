@@ -2,7 +2,7 @@
 
 ## DEMO 
 
-https://deablofk.github.io/ded/assets/output_video.mp4
+https://github.com/user-attachments/assets/8e3c319d-3015-42df-bc63-7ada7df8f698
 
 ## Overview
 
