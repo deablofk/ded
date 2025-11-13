@@ -7,7 +7,7 @@ categories = ["LSP"]
 
 [source]
 type = "generic"
-packageOrUrl = "https://download.eclipse.org/jdtls/milestones/1.44.0/jdt-language-server-1.44.0-202501221502.tar.gz"
+packageOrUrl = "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.52.0/jdt-language-server-1.52.0-202510301627.tar.gz"
 executable = "bin/jdtls -data /home/cwby/.cache/jdtls-workspace"
 
 [trigger]

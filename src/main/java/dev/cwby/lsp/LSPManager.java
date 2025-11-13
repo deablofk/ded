@@ -45,22 +45,30 @@ public class LSPManager {
 
     public static void initializeServer(ScratchBuffer buffer, PackageData pkg) {
         File root = FileUtils.findProjectRoot(new File(buffer.getFilepath()), pkg.trigger.projectRoot);
-        try {
-            ProcessBuilder pb = createCommand(pkg);
-            pb.redirectErrorStream(true);
-            var process = pb.start();
-            lspErrorLogger(process.getErrorStream(), pkg.name);
-            Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(LSP_LISTENER, process.getInputStream(), process.getOutputStream());
-            LSPClient client = startLSPClient(launcher, root.getAbsolutePath());
-            ATTACHED_LSP.put(buffer, client);
-            client.sendDidOpen(buffer);
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        
+        // Initialize LSP asynchronously to avoid blocking the UI
+        Thread initThread = new Thread(() -> {
+            try {
+                ProcessBuilder pb = createCommand(pkg);
+                var process = pb.start();
+                lspErrorLogger(process.getErrorStream(), pkg.name);
+                Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(LSP_LISTENER, process.getInputStream(), process.getOutputStream());
+                LSPClient client = startLSPClient(launcher, root.getAbsolutePath());
+                ATTACHED_LSP.put(buffer, client);
+                client.sendDidOpen(buffer);
+                System.out.println("LSP server initialized for " + pkg.name);
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                System.err.println("Failed to initialize LSP server: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+        initThread.setDaemon(true);
+        initThread.setName("LSP-Init-" + pkg.name);
+        initThread.start();
     }
 
     private static void lspErrorLogger(InputStream errorStream, String lspName) {
-        new Thread(() -> {
+        Thread errorThread = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -69,8 +77,9 @@ public class LSPManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         });
+        errorThread.setDaemon(true);
+        errorThread.start();
     }
 
     public static LSPClient getLSPClient(ScratchBuffer buffer) {
