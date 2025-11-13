@@ -11,7 +11,7 @@ val lwjglNatives = "natives-linux"
 repositories {
     mavenCentral()
     maven { url = uri("https://packages.jetbrains.team/maven/p/skija/maven") }  // replace with actual URL
-    maven("https://oss.sonatype.org/content/repositories/snapshots/")
+    maven("https://central.sonatype.com/repository/maven-snapshots")
 }
 
 dependencies {
