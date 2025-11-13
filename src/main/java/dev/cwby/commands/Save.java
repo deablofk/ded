@@ -1,7 +1,7 @@
 package dev.cwby.commands;
 
 import dev.cwby.editor.TextBuffer;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
 
 import java.io.File;
@@ -11,7 +11,7 @@ import java.nio.file.Files;
 public class Save implements ICommand {
     @Override
     public boolean run(String[] args) {
-        var buffer = ((TextComponent) SkiaRenderer.WM.getCurrentWindow().component).getBuffer();
+        var buffer = ((TextComponent) OpenGLRenderer.WM.getCurrentWindow().component).getBuffer();
 
         if (buffer instanceof TextBuffer textBuffer) {
             File file = textBuffer.file;

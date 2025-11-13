@@ -10,7 +10,6 @@ val lwjglNatives = "natives-linux"
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://packages.jetbrains.team/maven/p/skija/maven") }  // replace with actual URL
     maven("https://central.sonatype.com/repository/maven-snapshots")
 }
 
@@ -30,8 +29,6 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-sdl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
 
-    // https://mvnrepository.com/artifact/io.github.humbleui/skija-linux-x64
-    implementation("io.github.humbleui:skija-linux-x64:0.116.3")
     // https://central.sonatype.com/artifact/io.github.tree-sitter/jtreesitter
     implementation("io.github.tree-sitter:jtreesitter:0.24.1")
     // https://central.sonatype.com/artifact/com.moandjiezana.toml/toml4j

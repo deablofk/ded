@@ -20,7 +20,7 @@ public class TrieNode {
     public TrieNode search(String keybinding) {
         return children.get(keybinding);
     }
-
+	
     @Override
     public String toString() {
         return "TrieNode{" +

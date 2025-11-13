@@ -1,7 +1,7 @@
 package dev.cwby.commands;
 
 import dev.cwby.BufferManager;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.component.TextComponent;
@@ -10,7 +10,7 @@ public class Split implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        Window window = SkiaRenderer.WM.getCurrentWindow();
+        Window window = OpenGLRenderer.WM.getCurrentWindow();
         if (window instanceof TiledWindow tiledWindow) {
             tiledWindow.splitHorizontally();
             if (tiledWindow.component != null) {
@@ -21,7 +21,7 @@ public class Split implements ICommand {
                 tiledWindow.leftChild.component = component;
                 tiledWindow.rightChild.component = component;
             }
-            SkiaRenderer.WM.setCurrentWindow(tiledWindow.rightChild);
+            OpenGLRenderer.WM.setCurrentWindow(tiledWindow.rightChild);
         }
         return true;
     }

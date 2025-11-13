@@ -1,7 +1,7 @@
 package dev.cwby.graphics.layout.component;
 
-import io.github.humbleui.skija.Canvas;
+import dev.cwby.graphics.opengl.Renderer2D;
 
 public interface IComponent {
-    void render(Canvas canvas, float x, float y, float width, float height);
+    void render(Renderer2D renderer, float x, float y, float width, float height);
 }

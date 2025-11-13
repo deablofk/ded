@@ -5,25 +5,24 @@ import dev.cwby.config.ConfigurationParser;
 import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.FontManager;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
+import dev.cwby.graphics.opengl.GLFont;
+import dev.cwby.graphics.opengl.Renderer2D;
 import dev.cwby.input.GlobalKeyHandler;
 import dev.cwby.treesitter.SyntaxHighlighter;
-import io.github.humbleui.skija.Canvas;
-import io.github.humbleui.skija.Font;
-import io.github.humbleui.skija.FontMetrics;
-import io.github.humbleui.skija.Paint;
-import io.github.humbleui.types.Rect;
 import io.github.treesitter.jtreesitter.Node;
 
+import java.util.HashMap;
 import java.util.Map;
-
 
 public class TextComponent implements IComponent {
 
-    private static final Paint textPaint = new Paint().setColor(Deditor.getConfig().treesitter.get("default"));
-    private static final Paint numberPaint = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().theme.numberColor));
-    private static final Paint cursorColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color));
-    private static final Paint selectColor = new Paint().setColor(ConfigurationParser.hexToInt(Deditor.getConfig().cursor.select));
+    private static final int textColor = Deditor.getConfig().treesitter.get("default");
+    private static final int numberColor = ConfigurationParser.hexToInt(Deditor.getConfig().theme.numberColor);
+    private static final int cursorColorInt = ConfigurationParser.hexToInt(Deditor.getConfig().cursor.color);
+    private static final int selectColorInt = ConfigurationParser.hexToInt(Deditor.getConfig().cursor.select);
+    private static final int lineBackgroundColor = 0x66666666;
+    private static final int borderColor = 0xFF000000;
 
     private ScratchBuffer buffer;
     private boolean cursorVisible = true;
@@ -38,67 +37,64 @@ public class TextComponent implements IComponent {
         return buffer;
     }
 
-    private void drawHighlightedText(Canvas canvas, String text, float x, float y, float width, float height, Map<Integer, Paint> styles) {
+    private void drawHighlightedText(Renderer2D renderer, String text, float x, float y, float width, float height, Map<Integer, Integer> styles) {
         float offsetX = x - buffer.offsetX;
-        var currentText = new StringBuilder();
-        Paint currentPaint = null;
-        Font font = FontManager.getDefaultFont();
-        FontMetrics metrics = font.getMetrics();
-        float baselineOffset = -metrics.getAscent();
+        StringBuilder currentText = new StringBuilder();
+        int currentColor = textColor;
+        GLFont font = FontManager.getDefaultFont();
+        float baselineOffset = font.getAscent();
         float textY = y + baselineOffset;
         int tabSize = 4;
-        float spaceWidth = font.measureTextWidth(" ");
+        float spaceWidth = font.measureText(" ");
 
         for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
-            Paint paint = styles.getOrDefault(i, textPaint);
+            int color = styles.getOrDefault(i, textColor);
 
             if (codePoint == '\t') {
-                if (!currentText.isEmpty()) {
-                    canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
-                    offsetX += font.measureTextWidth(currentText.toString());
+                if (currentText.length() > 0) {
+                    renderer.drawText(currentText.toString(), offsetX, textY, font, currentColor);
+                    offsetX += font.measureText(currentText.toString());
                     currentText.setLength(0);
                 }
 
                 float tabWidth = spaceWidth * tabSize;
                 offsetX = ((int) ((offsetX + tabWidth) / tabWidth)) * tabWidth;
             } else {
-                if (currentPaint == null || !currentPaint.equals(paint)) {
-                    if (!currentText.isEmpty()) {
-                        canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
-                        offsetX += font.measureTextWidth(currentText.toString());
+                if (currentColor != color) {
+                    if (currentText.length() > 0) {
+                        renderer.drawText(currentText.toString(), offsetX, textY, font, currentColor);
+                        offsetX += font.measureText(currentText.toString());
                         currentText.setLength(0);
                     }
-                    currentPaint = paint;
+                    currentColor = color;
                 }
                 currentText.append(Character.toChars(codePoint));
             }
 
             i += Character.charCount(codePoint);
         }
-        if (!currentText.isEmpty()) {
-            canvas.drawString(currentText.toString(), offsetX, textY, font, currentPaint);
+        if (currentText.length() > 0) {
+            renderer.drawText(currentText.toString(), offsetX, textY, font, currentColor);
         }
     }
 
-    Paint lineBackgroundPaint = new Paint().setColor(0x66666666);
-
-    public void drawCurrentLineBackground(Canvas canvas, float x, float y, float width, float lineHeight) {
+    public void drawCurrentLineBackground(Renderer2D renderer, float x, float y, float width, float lineHeight) {
         float currentLineY = (buffer.cursorY - buffer.offsetY) * lineHeight;
-        canvas.drawRect(Rect.makeXYWH(x, y + currentLineY, width, lineHeight), lineBackgroundPaint);
+        renderer.drawRect(x, y + currentLineY, width, lineHeight, lineBackgroundColor);
     }
 
-    public void renderText(Canvas canvas, float x, float y, float width, float height, int offsetY) {
+    public void renderText(Renderer2D renderer, float x, float y, float width, float height, int offsetY) {
         float lineHeight = FontManager.getLineHeight();
         for (int i = offsetY, count = 0; i < buffer.lines.size(); i++, count++) {
             StringBuilder line = buffer.lines.get(i);
             Node root = SyntaxHighlighter.parse(line.toString(), buffer.getFileType());
-            Map<Integer, Paint> styles = SyntaxHighlighter.highlight(root, line.toString());
-            drawHighlightedText(canvas, line.toString(), x, y + count * lineHeight, width, height, styles);
+            Map<Integer, Integer> styles = SyntaxHighlighter.highlight(root, line.toString());
+            drawHighlightedText(renderer, line.toString(), x, y + count * lineHeight, width, height, styles);
         }
     }
 
-    public void renderCursor(Canvas canvas, float bufferX, float bufferY) {
+    public void renderCursor(Renderer2D renderer, float bufferX, float bufferY) {
         long now = System.currentTimeMillis();
 
         if (now - GlobalKeyHandler.lastKeyPressTime >= 5000) {
@@ -110,7 +106,7 @@ public class TextComponent implements IComponent {
             cursorVisible = true;
         }
 
-        TextComponent textComponent = (TextComponent) SkiaRenderer.WM.getCurrentWindow().component;
+        TextComponent textComponent = (TextComponent) OpenGLRenderer.WM.getCurrentWindow().component;
         if (textComponent != null && textComponent.getBuffer() != null) {
             ScratchBuffer buffer = textComponent.getBuffer();
             int cursorX = buffer.cursorX;
@@ -121,16 +117,16 @@ public class TextComponent implements IComponent {
                 if (cursorY >= 0) {
                     StringBuilder line = buffer.lines.get(cursorY);
                     int tabSize = 4;
-                    float spaceWidth = FontManager.getDefaultFont().measureTextWidth(" ");
+                    float spaceWidth = FontManager.getDefaultFont().measureText(" ");
                     for (int i = 0; i < cursorX && i < line.length(); ) {
                         int codePoint = line.codePointAt(i);
                         if (codePoint == '\t') {
                             float tabWidth = spaceWidth * tabSize;
                             x = ((int) ((x + tabWidth) / tabWidth)) * tabWidth;
                         } else {
-                            Font font = FontManager.getDefaultFont();
+                            GLFont font = FontManager.getDefaultFont();
                             String glyph = new String(Character.toChars(codePoint));
-                            x += font.measureTextWidth(glyph);
+                            x += font.measureText(glyph);
                         }
                         i += Character.charCount(codePoint);
                     }
@@ -138,15 +134,15 @@ public class TextComponent implements IComponent {
 
                 float y = (cursorY - buffer.offsetY) * FontManager.getLineHeight();
                 if (Deditor.getBufferMode() == TextInteractionMode.NAVIGATION || Deditor.getBufferMode() == TextInteractionMode.SELECT) {
-                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, FontManager.getAvgWidth(), FontManager.getLineHeight()), cursorColor);
+                    renderer.drawRect(bufferX + x, bufferY + y, FontManager.getAvgWidth(), FontManager.getLineHeight(), cursorColorInt);
                 } else if (Deditor.getBufferMode() == TextInteractionMode.INSERT) {
-                    canvas.drawRect(Rect.makeXYWH(bufferX + x, bufferY + y, 2, FontManager.getLineHeight()), cursorColor);
+                    renderer.drawRect(bufferX + x, bufferY + y, 2, FontManager.getLineHeight(), cursorColorInt);
                 }
             }
         }
     }
 
-    public void renderSelection(Canvas canvas, float bufferX, float bufferY) {
+    public void renderSelection(Renderer2D renderer, float bufferX, float bufferY) {
         int cursorX = buffer.cursorX;
         int cursorY = buffer.cursorY;
         int selectX = GlobalKeyHandler.startVisualX;
@@ -168,9 +164,9 @@ public class TextComponent implements IComponent {
 
                 for (int i = 0; i < lineContent.length(); ) {
                     int codePoint = lineContent.codePointAt(i);
-                    Font font = FontManager.getDefaultFont();
+                    GLFont font = FontManager.getDefaultFont();
                     String glyph = new String(Character.toChars(codePoint));
-                    float charWidth = font.measureTextWidth(glyph);
+                    float charWidth = font.measureText(glyph);
 
                     if (i < lineStart) {
                         startXOffset += charWidth;
@@ -182,29 +178,26 @@ public class TextComponent implements IComponent {
                     i += Character.charCount(codePoint);
                 }
 
-                canvas.drawRect(Rect.makeXYWH(bufferX + startXOffset, bufferY + lineY, endXOffset - startXOffset, FontManager.getLineHeight()), selectColor);
+                renderer.drawRect(bufferX + startXOffset, bufferY + lineY, endXOffset - startXOffset, FontManager.getLineHeight(), selectColorInt);
             }
         }
     }
 
-
-    private final Paint borderPaint = new Paint().setColor(0xFF000000).setStroke(true).setStrokeWidth(5);
-
     @Override
-    public void render(Canvas canvas, float x, float y, float width, float height) {
-        canvas.save();
-        Rect rect = Rect.makeXYWH(x, y, width, height);
-        canvas.clipRect(rect);
-        canvas.clear(ConfigurationParser.hexToInt(Deditor.getConfig().theme.background));
-        drawCurrentLineBackground(canvas, x, y, x + width, FontManager.getLineHeight());
-        canvas.drawRect(rect, borderPaint);
+    public void render(Renderer2D renderer, float x, float y, float width, float height) {
+        renderer.pushClip(x, y, width, height);
+        renderer.drawRect(x, y, width, height, ConfigurationParser.hexToInt(Deditor.getConfig().theme.background));
+        drawCurrentLineBackground(renderer, x, y, width, FontManager.getLineHeight());
         if (buffer != null) {
-            renderText(canvas, x, y, width, height, buffer.offsetY);
-            if (SkiaRenderer.WM.getCurrentWindow().component == this) {
-                renderCursor(canvas, x, y);
-                renderSelection(canvas, x, y);
+            renderText(renderer, x, y, width, height, buffer.offsetY);
+            if (OpenGLRenderer.WM.getCurrentWindow().component == this) {
+                renderCursor(renderer, x, y);
+                renderSelection(renderer, x, y);
             }
         }
-        canvas.restore();
+        renderer.popClip();
+        
+        // Draw border after clipping is removed so all edges are visible
+        renderer.drawRect(x, y, width, height, borderColor, true);
     }
 }

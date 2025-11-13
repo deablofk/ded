@@ -1,7 +1,6 @@
 package dev.cwby.treesitter;
 
 import dev.cwby.Deditor;
-import io.github.humbleui.skija.Paint;
 import io.github.treesitter.jtreesitter.*;
 
 import java.lang.foreign.SymbolLookup;
@@ -41,12 +40,12 @@ public class SyntaxHighlighter {
         return rootNode;
     }
 
-    public static Map<Integer, Paint> highlight(Node root, String code) {
-        Map<Integer, Paint> styles = new HashMap<>();
+    public static Map<Integer, Integer> highlight(Node root, String code) {
+        Map<Integer, Integer> styles = new HashMap<>();
         List<HighlightSpan> highlights = traverseTree(root, code);
         for (HighlightSpan span : highlights) {
             for (int i = span.start(); i < span.end(); i++) {
-                styles.put(i, span.paint());
+                styles.put(i, span.color());
             }
         }
         return styles;
@@ -57,9 +56,9 @@ public class SyntaxHighlighter {
         String type = node.getType();
         int start = node.getStartByte();
         int end = node.getEndByte();
-        Paint paint = getPaintForType(type);
+        int color = getColorForType(type);
 
-        spans.add(new HighlightSpan(start, end, paint));
+        spans.add(new HighlightSpan(start, end, color));
 
         for (Node child : node.getChildren()) {
             spans.addAll(traverseTree(child, code));
@@ -68,10 +67,8 @@ public class SyntaxHighlighter {
         return spans;
     }
 
-    private static Paint getPaintForType(String type) {
-        Paint paint = new Paint();
+    private static int getColorForType(String type) {
         Map<String, Integer> mapTheme = Deditor.getConfig().treesitter;
-        paint.setColor(mapTheme.getOrDefault(type, mapTheme.getOrDefault("default", 0xFFFFFFFF)));
-        return paint;
+        return mapTheme.getOrDefault(type, mapTheme.getOrDefault("default", 0xFFFFFFFF));
     }
 }

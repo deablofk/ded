@@ -1,7 +1,7 @@
 package dev.cwby.commands;
 
 import dev.cwby.BufferManager;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.component.TextComponent;
 
 import java.io.File;
@@ -14,7 +14,7 @@ public class Edit implements ICommand {
             System.out.println("Specify the File Path");
             return false;
         }
-        SkiaRenderer.WM.getCurrentWindow().component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
+        OpenGLRenderer.WM.getCurrentWindow().component = new TextComponent().setBuffer(BufferManager.openFileBuffer(args[1]));
         return true;
     }
 

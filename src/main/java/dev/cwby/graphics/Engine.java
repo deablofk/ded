@@ -55,7 +55,7 @@ public class Engine {
         SDL_GL_SetSwapInterval(1);
         GL.createCapabilities();
 
-        IRender renderer = new SkiaRenderer();
+        IRender renderer = new OpenGLRenderer();
         SDL_Event event = SDL_Event.create();
         while (!shouldClose) {
             // handle events

@@ -8,7 +8,7 @@ import dev.cwby.editor.ScratchBuffer;
 import dev.cwby.editor.TextInteractionMode;
 import dev.cwby.graphics.Engine;
 import dev.cwby.graphics.FontManager;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.TiledWindow;
 import dev.cwby.graphics.layout.Window;
 import dev.cwby.graphics.layout.component.TextComponent;
@@ -164,7 +164,7 @@ public class GlobalKeyHandler implements IKeyHandler {
                 CommandHandler.executeCommand("edit " + location.getUri().replace("file://", ""));
                 int x = location.getRange().getStart().getCharacter();
                 int y = location.getRange().getStart().getLine();
-                SkiaRenderer.getCurrentTextBuffer().gotoPosition(x, y);
+                OpenGLRenderer.getCurrentTextBuffer().gotoPosition(x, y);
             } else {
                 // show options in the floating window for selecting the denition
             }
@@ -195,22 +195,22 @@ public class GlobalKeyHandler implements IKeyHandler {
     private static void registerInsertMappings() {
         KeybindingTrie.imap("TAB", (w, b) -> b.insertTextAtCursor("\t"));
         KeybindingTrie.imap("CTRL-p", (w, b) -> {
-            if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
-                SkiaRenderer.WM.getAutoCompleteWindow().buffer.moveCursorUp();
+            if (OpenGLRenderer.WM.getAutoCompleteWindow().isVisible()) {
+                OpenGLRenderer.WM.getAutoCompleteWindow().buffer.moveCursorUp();
             }
         });
         KeybindingTrie.imap("CTRL-n", (w, b) -> {
-            if (SkiaRenderer.WM.getAutoCompleteWindow().isVisible()) {
-                SkiaRenderer.WM.getAutoCompleteWindow().buffer.moveCursorDown();
+            if (OpenGLRenderer.WM.getAutoCompleteWindow().isVisible()) {
+                OpenGLRenderer.WM.getAutoCompleteWindow().buffer.moveCursorDown();
             }
         });
 
         KeybindingTrie.imap("ESC", (_, _) -> {
-            SkiaRenderer.WM.getAutoCompleteWindow().hide();
+            OpenGLRenderer.WM.getAutoCompleteWindow().hide();
             switchMode(NAVIGATION);
         });
         KeybindingTrie.imap("RET", (_, b) -> {
-            var cmpWindow = SkiaRenderer.WM.getAutoCompleteWindow();
+            var cmpWindow = OpenGLRenderer.WM.getAutoCompleteWindow();
             if (cmpWindow.isVisible()) {
                 CompletionItem selectedItem = cmpWindow.select();
                 if (selectedItem != null) {
@@ -231,7 +231,7 @@ public class GlobalKeyHandler implements IKeyHandler {
         });
         KeybindingTrie.imap("BACKSPACE", (w, b) -> {
             b.removeChar();
-            SkiaRenderer.WM.getAutoCompleteWindow().hide();
+            OpenGLRenderer.WM.getAutoCompleteWindow().hide();
         });
 
         KeybindingTrie.imap("CTRL-v", (w, b) -> {
@@ -273,7 +273,7 @@ public class GlobalKeyHandler implements IKeyHandler {
             root = KeybindingTrie.getRoot(Deditor.getBufferMode());
         } else if (root.action != null) {
             int repeatCount = KeybindingTrie.getNumberInput();
-            Window window = SkiaRenderer.WM.getCurrentWindow();
+            Window window = OpenGLRenderer.WM.getCurrentWindow();
             ScratchBuffer buffer = null;
             if (window.getComponent() instanceof TextComponent textComponent) {
                 buffer = textComponent.getBuffer();
@@ -320,7 +320,7 @@ public class GlobalKeyHandler implements IKeyHandler {
     @Override
     public void handleInput(SDL_Event event) {
         TextInteractionMode mode = Deditor.getBufferMode();
-        if (mode == INSERT && SkiaRenderer.WM.getCurrentWindow().getComponent() instanceof TextComponent textComponent) {
+        if (mode == INSERT && OpenGLRenderer.WM.getCurrentWindow().getComponent() instanceof TextComponent textComponent) {
             ScratchBuffer buffer = textComponent.getBuffer();
             char c = event.text().textString().charAt(0);
             buffer.appendChar(c);
@@ -334,17 +334,17 @@ public class GlobalKeyHandler implements IKeyHandler {
                 if (suggestions.isEmpty()) {
                     return;
                 }
-                float windowX = SkiaRenderer.WM.getCurrentWindow().x + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth());
-                float windowY = SkiaRenderer.WM.getCurrentWindow().y + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight();
+                float windowX = OpenGLRenderer.WM.getCurrentWindow().x + ((buffer.cursorX - buffer.offsetX) * FontManager.getAvgWidth());
+                float windowY = OpenGLRenderer.WM.getCurrentWindow().y + (buffer.cursorY - buffer.offsetY) * FontManager.getLineHeight();
 
                 float maxWindowHeight = (Engine.getHeight() - FontManager.getLineHeight()) - windowY;
                 float windowWidth = 400;
 
-                var cmpWindow = SkiaRenderer.WM.getAutoCompleteWindow();
+                var cmpWindow = OpenGLRenderer.WM.getAutoCompleteWindow();
                 cmpWindow.setSuggestions(suggestions);
                 cmpWindow.show(windowX, windowY, windowWidth, maxWindowHeight);
             } else {
-                SkiaRenderer.WM.getAutoCompleteWindow().hide();
+                OpenGLRenderer.WM.getAutoCompleteWindow().hide();
             }
         } else if (mode == COMMAND) {
             CommandHandler.appendBuffer(event.text().textString().charAt(0));

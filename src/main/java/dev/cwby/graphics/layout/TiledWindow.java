@@ -1,7 +1,7 @@
 package dev.cwby.graphics.layout;
 
 import dev.cwby.graphics.Engine;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.component.SplitType;
 import dev.cwby.lsp.LSPManager;
 
@@ -121,25 +121,25 @@ public class TiledWindow extends Window {
 
     public TiledWindow moveLeft() {
         TiledWindow neighbor = findNeighbor(0);
-        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
+        if (neighbor != null) OpenGLRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveRight() {
         TiledWindow neighbor = findNeighbor(1);
-        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
+        if (neighbor != null) OpenGLRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveUp() {
         TiledWindow neighbor = findNeighbor(2);
-        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
+        if (neighbor != null) OpenGLRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
     public TiledWindow moveDown() {
         TiledWindow neighbor = findNeighbor(3);
-        if (neighbor != null) SkiaRenderer.WM.setCurrentWindow(neighbor);
+        if (neighbor != null) OpenGLRenderer.WM.setCurrentWindow(neighbor);
         return neighbor;
     }
 
@@ -155,9 +155,9 @@ public class TiledWindow extends Window {
 
         if (sibling != null) {
             if (father.father == null) {
-                SkiaRenderer.WM.setRootNode(sibling);
+                OpenGLRenderer.WM.setRootNode(sibling);
                 sibling.father = null;
-                SkiaRenderer.WM.setCurrentWindow(findLeaf(sibling));
+                OpenGLRenderer.WM.setCurrentWindow(findLeaf(sibling));
             } else {
                 sibling.father = father.father;
 
@@ -167,7 +167,7 @@ public class TiledWindow extends Window {
                     father.father.rightChild = sibling;
                 }
 
-                SkiaRenderer.WM.setCurrentWindow(findLeaf(sibling));
+                OpenGLRenderer.WM.setCurrentWindow(findLeaf(sibling));
             }
 
             sibling.updateSize(father.x, father.y, father.width, father.height);
@@ -181,10 +181,10 @@ public class TiledWindow extends Window {
             }
 
             if (father.father == null) {
-                SkiaRenderer.WM.setRootNode(null);
+                OpenGLRenderer.WM.setRootNode(null);
             }
 
-            SkiaRenderer.WM.setCurrentWindow(father.father);
+            OpenGLRenderer.WM.setCurrentWindow(father.father);
         }
     }
 }

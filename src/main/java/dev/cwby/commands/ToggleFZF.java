@@ -1,7 +1,7 @@
 package dev.cwby.commands;
 
 import dev.cwby.graphics.Engine;
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 import dev.cwby.graphics.layout.component.FZFWindow;
 
 public class ToggleFZF implements ICommand {
@@ -20,7 +20,7 @@ public class ToggleFZF implements ICommand {
         float y = (float) ((height * 0.1) / 2);
 
         fzfComponent.show(x, y, width * 0.9F, height * 0.9F);
-        SkiaRenderer.WM.openFloatingWindow(fzfComponent);
+        OpenGLRenderer.WM.openFloatingWindow(fzfComponent);
         return true;
     }
 }

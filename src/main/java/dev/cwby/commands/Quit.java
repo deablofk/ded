@@ -1,12 +1,12 @@
 package dev.cwby.commands;
 
-import dev.cwby.graphics.SkiaRenderer;
+import dev.cwby.graphics.OpenGLRenderer;
 
 public class Quit implements ICommand {
 
     @Override
     public boolean run(String[] args) {
-        SkiaRenderer.WM.getCurrentWindow().close();
+        OpenGLRenderer.WM.getCurrentWindow().close();
         return true;
     }
 }
